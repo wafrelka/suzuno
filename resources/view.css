@@ -120,7 +120,7 @@ body {
 #list {
 	position: relative; /* for list-loading-animation */
 	flex-grow: 1;
-	overflow-y: scroll;
+	overflow-y: hidden;
 }
 
 /* list-container */
@@ -130,12 +130,15 @@ body {
 	grid-gap: 0;
 	grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
 	grid-auto-rows: max-content;
-	min-height: 100%;
+	height: 100%;
+	overflow-y: scroll;
+	visibility: hidden;
 	opacity: 0;
 	background-color: var(--color-base1);
 }
 
 .load-completed .list-container {
+	visibility: visible;
 	opacity: 1;
 	transition: opacity var(--animation-speed-fast);
 }

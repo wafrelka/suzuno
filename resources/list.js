@@ -10,7 +10,7 @@ class List {
 		this._on_directory_selected = () => {};
 
 		let observer_options = {
-			root: this._root,
+			root: this._root.querySelector(".list-container"),
 			rootMargin: "100% 0% 100% 0%",
 			threshold: 0,
 		};

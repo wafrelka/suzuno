@@ -78,6 +78,9 @@ class Controller {
 		};
 		this._pager.on_back_requested = (url) => {
 			this.refresh_with(url);
+		};
+		this._pager.on_page_changed = (page_num) => {
+			this.refresh_with(get_page_url(this._current.location, page_num));
 		}
 	}
 

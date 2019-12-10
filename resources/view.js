@@ -1,5 +1,6 @@
 import { List } from "./list.js";
 import { Navi } from "./navi.js";
+import { Pager } from "./pager.js";
 import { Controller } from "./controller.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -11,7 +12,10 @@ document.addEventListener("DOMContentLoaded", () => {
 	let menu_elem = document.getElementById("menu");
 	let navi = new Navi(header_elem, menu_elem);
 
-	let ctrler = new Controller(list, navi);
+	let pager_elem = document.getElementById("pager");
+	let pager = new Pager(pager_elem, 3);
+
+	let ctrler = new Controller(list, navi, pager);
 	ctrler.on_push_state = (url, extra, replacing) => {
 		if(replacing === true) {
 			window.history.replaceState(extra, "", url);
@@ -22,6 +26,24 @@ document.addEventListener("DOMContentLoaded", () => {
 	window.addEventListener("popstate", (ev) => {
 		ctrler.rewrite_with(document.location);
 	});
+
+	window.addEventListener("keydown", (ev) => {
+		if(ctrler.in_pager) {
+			switch(ev.code) {
+				case "ArrowRight":
+					ev.preventDefault();
+					ctrler.move_to_next_page();
+					break;
+				case "ArrowLeft":
+					ev.preventDefault();
+					ctrler.move_to_prev_page();
+					break;
+				case "Escape":
+					ev.preventDefault();
+					ctrler.switch_to_list();
+			}
+		}
+	})
 
 	ctrler.rewrite_with(document.location);
 });

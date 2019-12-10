@@ -19,6 +19,7 @@ type ResourceInfo struct {
 	ModifiedAt int64 `json:"modified_at"`
 	Size int64 `json:"size"`
 	ThumbnailUrl string `json:"thumbnail_url,omitempty"`
+	FileUrl string `json:"file_url,omitempty"`
 }
 
 func get_native_path(root, slash_path string) string {
@@ -61,6 +62,11 @@ func get_resource_info(path string, file_info os.FileInfo) (ResourceInfo, bool) 
 		}, true
 	}
 	return ResourceInfo{}, false
+}
+
+func (s *SuzunoServer) serve_file(w http.ResponseWriter, req *http.Request) {
+	file_path := get_native_path(s.root, req.URL.Path)
+	http.ServeFile(w, req, file_path)
 }
 
 func (s *SuzunoServer) serve_thumbnail(w http.ResponseWriter, req *http.Request) {
@@ -133,6 +139,7 @@ func (s *SuzunoServer) serve_meta_directory(w http.ResponseWriter, req *http.Req
 		if ok {
 			if res.Type == "file" {
 				res.ThumbnailUrl = s.thumbnail_url_prefix + full_slash_path
+				res.FileUrl = s.file_url_prefix + full_slash_path
 			}
 			resp.Resources = append(resp.Resources, res)
 		}

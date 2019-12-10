@@ -36,6 +36,7 @@ type SuzunoServer struct {
 	mux *http.ServeMux
 	root string
 	thumbnail_url_prefix string
+	file_url_prefix string
 }
 
 func assign_sub_handler(mux *http.ServeMux, prefix_slash string, h http.Handler) {
@@ -52,6 +53,7 @@ func NewSuzunoServer(root string) *SuzunoServer {
 		mux: http.NewServeMux(),
 		root: root,
 		thumbnail_url_prefix: "/thumbnail",
+		file_url_prefix: "/file",
 	}
 	static_fs := FileSystemHandler(func(name string) (http.File, error) {
 		res_path := path.Join("/resources", strings.TrimPrefix(name, "/"))
@@ -60,6 +62,7 @@ func NewSuzunoServer(root string) *SuzunoServer {
 	})
 
 	assign_sub_handler(s.mux, "/static/", http.FileServer(static_fs))
+	assign_sub_handler(s.mux, "/file/", http.HandlerFunc(s.serve_file))
 	assign_sub_handler(s.mux, "/thumbnail/", http.HandlerFunc(s.serve_thumbnail))
 	assign_sub_handler(s.mux, "/meta/directory/", http.HandlerFunc(s.serve_meta_directory))
 

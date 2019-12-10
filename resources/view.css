@@ -135,9 +135,10 @@ body {
 	visibility: hidden;
 	opacity: 0;
 	background-color: var(--color-base1);
+	will-change: transform;
 }
 
-.load-completed .list-container {
+.active.load-completed .list-container {
 	visibility: visible;
 	opacity: 1;
 	transition: opacity var(--animation-speed-fast);
@@ -147,20 +148,15 @@ body {
 	position: relative; /* for .list-item-inner */
 	height: 0;
 	padding-bottom: 100%;
-	contain: content;
-}
-
-.list-item-inner {
-	position: absolute;
-	width: 100%;
-	height: 100%;
 }
 
 .list-item-link {
 	display: flex;
 	flex-direction: column;
+	position: absolute;
 	width: 100%;
 	height: 100%;
+	overflow: hidden;
 }
 
 .list-item-image-container, .list-item-description {
@@ -330,15 +326,17 @@ body {
 	height: 100%;
 	overflow-x: hidden;
 	pointer-events: none;
+	visibility: hidden;
 	opacity: 0;
 	transform: translateY(-30%);
 }
 
 #pager.interacted {
-	transition: opacity var(--animation-speed-fast), transform var(--animation-speed-fast) ease-out;
+	transition: opacity var(--animation-speed-fast), transform var(--animation-speed-fast) ease-out, visibility var(--animation-speed-fast);
 }
 
 #pager.active {
+	visibility: initial;
 	opacity: 1;
 	transform: translateY(0);
 	pointer-events: initial;

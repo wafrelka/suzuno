@@ -44,7 +44,7 @@ class List {
 				target.classList.add("hidden-item");
 			}
 
-			if(visible && this._active) {
+			if(visible && this._active && img_elem.dataset.src !== "") {
 				replace_img_src_if_needed(img_elem);
 			} else {
 				reset_img_src_if_incomplete(img_elem);
@@ -54,6 +54,7 @@ class List {
 
 	activate_thumbnails() {
 		this._active = true;
+		this._root.classList.add("active");
 		for(let img_elem of this._root.querySelectorAll(".list-item-thumbnail")) {
 			if(img_elem.dataset.state == "visible") {
 				replace_img_src_if_needed(img_elem);
@@ -63,6 +64,7 @@ class List {
 
 	deactivate_partial_thumbnails() {
 		this._active = false;
+		this._root.classList.remove("active");
 		for(let img_elem of this._root.querySelectorAll(".list-item-thumbnail")) {
 			reset_img_src_if_incomplete(img_elem);
 		}
@@ -159,6 +161,7 @@ class List {
 			} else {
 				v.classList.add("empty-item");
 			}
+			v.classList.add("hidden-item");
 		}
 	}
 }

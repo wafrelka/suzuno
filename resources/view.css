@@ -12,6 +12,7 @@
 	--color-error: #d9374b;
 	--color-error-text: #ffffff;
 	--animation-speed-base: 0.3s;
+	--animation-speed-fast: 0.2s;
 	--animation-speed-loading: 1.0s;
 	--animation-delay-loading: -0.4s;
 }
@@ -129,7 +130,7 @@ body {
 
 .load-completed .list-container {
 	opacity: 1;
-	transition: opacity var(--animation-speed-base);
+	transition: opacity var(--animation-speed-fast);
 }
 
 .list-item {

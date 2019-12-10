@@ -1,30 +1,6 @@
 import { List } from "./list.js";
 import { Navi } from "./navi.js";
-import { get_directory_url } from "./url.js";
-import { fetch_json } from "./util.js";
-
-function fetch_resources(url) {
-
-	let url_path = new URL(url).pathname;
-
-	if(url_path.startsWith("/view/")) {
-		let res_path = url_path.replace(/^\/view/, "");
-		return fetch_json(`/meta/directory${res_path}`);
-	}
-
-	throw `unsupported resource url: ${url}`;
-}
-
-function add_link(base_url, resource) {
-	if(resource.type == "directory") {
-		return {
-			link: get_directory_url(base_url, resource.name),
-			...resource
-		};
-	} else {
-		return resource;
-	}
-}
+import { Controller } from "./controller.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -35,18 +11,17 @@ document.addEventListener("DOMContentLoaded", () => {
 	let menu_elem = document.getElementById("menu");
 	let navi = new Navi(header_elem, menu_elem);
 
-	fetch_resources(document.location).then((resp) => {
-		let resources = resp.resources.map((r) => add_link(document.location, r));
-		list.update(resources);
-		navi.update_title("", resp.path, "");
-	}).catch((err) => {
-		list.set_error_message(`failed to load: ${err}`);
+	let ctrler = new Controller(list, navi);
+	ctrler.on_push_state = (url, extra, replacing) => {
+		if(replacing === true) {
+			window.history.replaceState(extra, "", url);
+		} else {
+			window.history.pushState(extra, "", url);
+		}
+	};
+	window.addEventListener("popstate", (ev) => {
+		ctrler.rewrite_with(document.location);
 	});
 
-	list.on_file_selected = (url) => {
-		console.log(`selected: file ${url}`);
-	};
-	list.on_directory_selected = (url) => {
-		console.log(`selected: dir ${url}`);
-	};
+	ctrler.rewrite_with(document.location);
 });

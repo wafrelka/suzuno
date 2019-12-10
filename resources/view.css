@@ -4,7 +4,9 @@
 
 :root {
 	--color-key: #53657a;
+	--color-key-transparent: #53657ad0;
 	--color-key-text: #ffffff;
+	--color-key-sub-text: #c0c0c0;
 	--color-base1: #ffffff;
 	--color-base1-text: #53657a;
 	--color-base2: #eff7ff;
@@ -25,7 +27,7 @@
 
 i {
 	vertical-align: middle;
-	user-select: all;
+	user-select: none;
 	font-family: 'Material Icons Outlined';
 	font-style: normal;
 	font-weight: normal;
@@ -349,9 +351,11 @@ body {
 }
 
 .pager-page {
+	position: relative;
 	flex-shrink: 0;
 	width: 100%;
 	height: 100%;
+	overflow: hidden;
 	background-color: var(--color-page-back);
 }
 
@@ -390,4 +394,66 @@ body {
 
 .pager-page-image-container.completed .pager-page-stub {
 	opacity: 0;
+}
+
+.pager-page .toolbox {
+	display: flex;
+	align-items: center;
+	width: calc(100% - 0.6rem);
+	padding: 0.4rem 0.3rem;
+	background-color: var(--color-key-transparent);
+	color: var(--color-key-text);
+}
+
+#pager.interacted .pager-page .toolbox {
+	transition: transform var(--animation-speed-base);
+}
+
+.pager-page .toolbox.activated {
+	transform: translateY(0);
+}
+
+.pager-page-toolbox-top {
+	position: absolute;
+	top: 0;
+	left: 0;
+	transform: translateY(-100%);
+}
+
+.pager-page-toolbox-bottom {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	transform: translateY(+100%);
+}
+
+.pager-page-back-link {
+	flex-shrink: 0;
+}
+
+.pager-page-back-link i {
+	font-size: 2.5rem;
+	line-height: 0.8;
+}
+
+.pager-page-description {
+	margin: 0 0.3rem;
+	word-break: break-word;
+	flex-grow: 1;
+}
+
+.pager-page-size {
+	font-size: 0.6rem;
+	margin-left: 0.4rem;
+	color: var(--color-key-sub-text);
+}
+
+.pager-page-download-link {
+	flex-shrink: 0;
+}
+
+.pager-page-download-link i {
+	margin-right: 0.1rem;
+	font-size: 2.5rem;
+	line-height: 0.8;
 }

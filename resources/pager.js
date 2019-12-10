@@ -1,10 +1,12 @@
 import { replace_img_src_if_needed, reset_img_src_if_incomplete } from "./imgsrc.js";
+import { get_friendly_size_text } from "./util.js";
 
 class Pager {
 
 	constructor(root, extra_pages) {
 
 		this._root = root;
+		this._back_link = "";
 		this._active = false;
 
 		this._extra_pages = extra_pages;
@@ -12,8 +14,10 @@ class Pager {
 		this._resources = null;
 
 		this._position = 0;
+		this._toolbox_activated_at = null;
 
 		this._on_page_changed = () => {};
+		this._on_back_requested = () => {};
 
 		this._setup_extra_pages();
 		this._move_to_base();
@@ -28,6 +32,10 @@ class Pager {
 			let v = template.cloneNode(true);
 			let vi = v.querySelector(".pager-page-image");
 			v.classList.remove("template");
+			v.querySelector(".pager-page-back-link").addEventListener("click", (ev) => {
+				ev.preventDefault();
+				this._on_back_requested(ev.currentTarget.href);
+			});
 			vi.addEventListener("load", () => { this._redraw_pages(); });
 			vi.addEventListener("error", () => { this._redraw_pages(); });
 			container.appendChild(v);
@@ -38,6 +46,10 @@ class Pager {
 
 	set on_page_changed(fn) {
 		this._on_page_changed = fn;
+	}
+
+	set on_back_requested(fn) {
+		this._on_back_requested = fn;
 	}
 
 	_move_to(position, page_diff = 0, animation = false) {
@@ -67,17 +79,29 @@ class Pager {
 	_redraw_single_page(elem, page_num, delayed = false) {
 
 		let img_elem = elem.querySelector(".pager-page-image");
+		let name_elem = elem.querySelector(".pager-page-name");
+		let size_elem = elem.querySelector(".pager-page-size");
+		let download_link_elem = elem.querySelector(".pager-page-download-link");
 
 		if(this._resources === null || page_num === null ||
 			page_num < 0 || page_num >= this._resources.length) {
+
 			elem.classList.add("blank-page");
+			name_elem.textContent = "";
+			size_elem.textContent = "";
+			download_link_elem.href = "";
+
 			reset_img_src_if_incomplete(img_elem);
+
 			return img_elem.complete;
 		}
 
-		elem.classList.remove("blank-page");
-
 		let res = this._resources[page_num];
+
+		elem.classList.remove("blank-page");
+		name_elem.textContent = res.name;
+		size_elem.textContent = get_friendly_size_text(res.size);
+		download_link_elem.href = res.file_url;
 
 		img_elem.dataset.src = res.file_url;
 		if(delayed === true) {
@@ -103,6 +127,45 @@ class Pager {
 			let v = pages[d + this._extra_pages];
 			let p = (this._current_num !== null ? this._current_num + d : null);
 			this._redraw_single_page(v, p, !cur_ok && current_priority);
+		}
+	}
+
+	hide_toolbox() {
+		let toolboxes = this._root.querySelectorAll(".pager-page .toolbox");
+		for(let elem of toolboxes) {
+			elem.classList.remove("activated");
+		}
+		this._toolbox_activated_at = null;
+	}
+
+	show_toolbox() {
+
+		this._toolbox_activated_at = Date.now();
+		let toolboxes = this._root.querySelectorAll(".pager-page .toolbox");
+		let timeout = 5000;
+
+		for(let elem of toolboxes) {
+			elem.classList.add("activated");
+		}
+
+		let deactivation_fn = () => {
+			if(this._toolbox_activated_at === null) {
+				return;
+			}
+			if(this._toolbox_activated_at + timeout > Date.now()) {
+				return;
+			}
+			this.hide_toolbox();
+		};
+
+		setTimeout(deactivation_fn, timeout);
+	}
+
+	toggle_toolbox() {
+		if(this._toolbox_activated_at !== null) {
+			this.hide_toolbox();
+		} else {
+			this.show_toolbox();
 		}
 	}
 
@@ -174,6 +237,13 @@ class Pager {
 		this._resources = resources;
 		this._current_num = null;
 		this._redraw_pages(true);
+	}
+
+	update_back_link(back_link) {
+		this._back_link = back_link;
+		for(let back_link_elem of this._root.querySelectorAll(".pager-page-back-link")) {
+			back_link_elem.href = this._back_link;
+		}
 	}
 }
 

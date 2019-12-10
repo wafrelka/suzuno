@@ -76,6 +76,9 @@ class Controller {
 		this._navi.on_back_requested = (url) => {
 			this.refresh_with(url);
 		};
+		this._pager.on_back_requested = (url) => {
+			this.refresh_with(url);
+		}
 	}
 
 	set on_push_state(fn) {
@@ -131,6 +134,7 @@ class Controller {
 
 		this._navi.update_back_link(get_parent_url(this._current.location));
 		this._navi.update_title("", get_resource_title(this._current.location), "");
+		this._pager.update_back_link(get_list_url(this._current.location));
 	}
 
 	refresh_with(location, replacing = false) {
@@ -162,6 +166,10 @@ class Controller {
 
 	move_to_prev_page() {
 		this._move_page(-1);
+	}
+
+	toggle_toolbox() {
+		this._pager.toggle_toolbox();
 	}
 
 	switch_to_list() {

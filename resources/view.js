@@ -41,6 +41,9 @@ document.addEventListener("DOMContentLoaded", () => {
 				case "Escape":
 					ev.preventDefault();
 					ctrler.switch_to_list();
+				case "Space":
+					ev.preventDefault();
+					ctrler.toggle_toolbox();
 			}
 		}
 	})

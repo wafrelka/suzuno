@@ -6,6 +6,7 @@ import (
 	"image/jpeg"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -27,6 +28,17 @@ func get_native_path(root, slash_path string) string {
 	rel_path := filepath.FromSlash(strings.TrimPrefix(slash_path, "/"))
 	file_path := filepath.Join(root, rel_path)
 	return file_path
+}
+
+func get_url(slash_path string) string {
+
+	slash_comps := strings.Split(slash_path, "/")
+	safe_slash_comps := []string{}
+	for _, c := range slash_comps {
+		safe_slash_comps = append(safe_slash_comps, url.PathEscape(c))
+	}
+
+	return strings.Join(safe_slash_comps, "/")
 }
 
 func is_image_ext(name string) bool {
@@ -135,11 +147,12 @@ func (s *SuzunoServer) serve_meta_directory(w http.ResponseWriter, req *http.Req
 
 	for _, entry := range entries {
 		full_slash_path := path.Join(req.URL.Path, entry.Name())
+		full_url := get_url(full_slash_path)
 		res, ok := get_resource_info(full_slash_path, entry)
 		if ok {
 			if res.Type == "file" {
-				res.ThumbnailUrl = s.thumbnail_url_prefix + full_slash_path
-				res.FileUrl = s.file_url_prefix + full_slash_path
+				res.ThumbnailUrl = s.thumbnail_url_prefix + full_url
+				res.FileUrl = s.file_url_prefix + full_url
 			}
 			resp.Resources = append(resp.Resources, res)
 		}

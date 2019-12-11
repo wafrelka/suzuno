@@ -45,7 +45,8 @@ function get_resource_title(url) {
 
 	if(url_path.startsWith("/view/")) {
 		let res_path = url_path.replace(/^\/view/, "");
-		return res_path;
+		let res_orig = res_path.split("/").map((c) => decodeURIComponent(c)).join("/");
+		return res_orig;
 	}
 
 	throw `unsupported resource url: ${url}`;

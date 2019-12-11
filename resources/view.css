@@ -5,6 +5,7 @@
 :root {
 	--color-key: #4e5f7b;
 	--color-key-transparent: #4e5f7bd0;
+	--color-key-border: #8f95a2;
 	--color-key-text: #ffffff;
 	--color-key-sub-text: #c0c0c0;
 	--color-base1: #ffffff;
@@ -95,6 +96,7 @@ body {
 	align-items: center;
 	width: calc(100% - 0.6rem);
 	padding: 0.4rem 0.3rem;
+	border-bottom: solid 0.1rem var(--color-key-border);
 	background-color: var(--color-key);
 	color: var(--color-key-text);
 }

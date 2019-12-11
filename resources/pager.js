@@ -18,6 +18,7 @@ class Pager {
 		this._resources = null;
 
 		this._position = 0;
+		this._move_requests = [];
 		this._toolbox_activated_at = null;
 
 		this._on_page_changed = () => {};
@@ -179,7 +180,29 @@ class Pager {
 		this._effective_touch = null;
 	}
 
-	_move_to(position, page_diff = 0, animation = false) {
+	_set_transform() {
+
+		if(this._move_requests.length === 0) {
+			return;
+		}
+		let t = this._move_requests.shift();
+
+		let container = this._root.querySelector(".pager-container");
+
+		if(t.animation === true) {
+			container.classList.add("animated");
+		} else {
+			container.classList.remove("animated");
+		}
+
+		container.style.transform = t.transform;
+
+		if(this._move_requests.length > 0) {
+			window.requestAnimationFrame(this._set_transform.bind(this));
+		}
+	}
+
+	_move_to(position, page_diff = 0, animation = false, ququeing = false) {
 
 		console.log("move_to(", position, ",", page_diff, ",", animation, ")");
 		this._position = position;
@@ -187,13 +210,19 @@ class Pager {
 		let trans_x_base = (this._extra_pages + page_diff) * -100;
 		let trans_x = -position;
 
-		let container = this._root.querySelector(".pager-container");
-		if(animation) {
-			container.classList.add("animated");
+		let arg = {
+			transform: `translateX(${trans_x_base}%) translateX(${trans_x}px)`,
+			animation: animation,
+		};
+
+		if(this._move_requests.length === 0) {
+			this._move_requests.push(arg);
+			window.requestAnimationFrame(this._set_transform.bind(this));
+		} else if(ququeing === true) {
+			this._move_requests.push(arg);
 		} else {
-			container.classList.remove("animated");
+			this._move_requests[0] = arg;
 		}
-		container.style.transform = `translateX(${trans_x_base}%) translateX(${trans_x}px)`;
 	}
 
 	_move_to_base_animated() {
@@ -326,12 +355,8 @@ class Pager {
 				}
 			}
 
-			window.requestAnimationFrame(() => {
-				this._move_to(this._position, -diff);
-				window.requestAnimationFrame(() => {
-					this._move_to_base_animated();
-				});
-			});
+			this._move_to(this._position, -diff);
+			this._move_to(0, 0, true, true);
 
 		} else {
 

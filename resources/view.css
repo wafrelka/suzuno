@@ -417,7 +417,7 @@ body {
 	transition: transform var(--animation-speed-base) ease-in-out;
 }
 
-.pager-page .toolbox.activated {
+.pager-page .toolbox.active {
 	transform: translateY(0);
 }
 

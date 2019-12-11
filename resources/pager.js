@@ -261,7 +261,7 @@ class Pager {
 	hide_toolbox() {
 		let toolboxes = this._root.querySelectorAll(".pager-page .toolbox");
 		for(let elem of toolboxes) {
-			elem.classList.remove("activated");
+			elem.classList.remove("active");
 		}
 		this._toolbox_activated_at = null;
 	}
@@ -273,7 +273,7 @@ class Pager {
 		let timeout = 5000;
 
 		for(let elem of toolboxes) {
-			elem.classList.add("activated");
+			elem.classList.add("active");
 		}
 
 		let deactivation_fn = () => {

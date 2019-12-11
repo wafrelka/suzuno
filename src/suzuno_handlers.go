@@ -4,13 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/jpeg"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+)
+
+const (
+	READDIR_BATCH_SIZE = 200
 )
 
 type ResourceInfo struct {
@@ -76,6 +80,15 @@ func get_resource_info(path string, file_info os.FileInfo) (ResourceInfo, bool) 
 	return ResourceInfo{}, false
 }
 
+func is_closed(req *http.Request) bool {
+	select {
+	case <-req.Context().Done():
+		return true
+	default:
+		return false
+	}
+}
+
 func (s *SuzunoServer) serve_file(w http.ResponseWriter, req *http.Request) {
 	file_path := get_native_path(s.root, req.URL.Path)
 	http.ServeFile(w, req, file_path)
@@ -131,9 +144,9 @@ func (s *SuzunoServer) serve_meta_directory(w http.ResponseWriter, req *http.Req
 		return
 	}
 
-	entries, err := ioutil.ReadDir(file_path)
+	dir, err := os.Open(file_path)
 	if err != nil {
-		http.Error(w, "stat failed", http.StatusInternalServerError)
+		http.Error(w, "io failed", http.StatusInternalServerError)
 		return
 	}
 
@@ -145,17 +158,36 @@ func (s *SuzunoServer) serve_meta_directory(w http.ResponseWriter, req *http.Req
 		Path: req.URL.Path,
 	}
 
-	for _, entry := range entries {
-		full_slash_path := path.Join(req.URL.Path, entry.Name())
-		full_url := get_url(full_slash_path)
-		res, ok := get_resource_info(full_slash_path, entry)
-		if ok {
-			if res.Type == "file" {
-				res.ThumbnailUrl = s.thumbnail_url_prefix + full_url
-				res.FileUrl = s.file_url_prefix + full_url
-			}
-			resp.Resources = append(resp.Resources, res)
+	for {
+
+		if is_closed(req) {
+			return
 		}
+
+		entries, err := dir.Readdir(READDIR_BATCH_SIZE)
+
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			http.Error(w, "io failed", http.StatusInternalServerError)
+			return
+		}
+
+		for _, entry := range entries {
+			full_slash_path := path.Join(req.URL.Path, entry.Name())
+			full_url := get_url(full_slash_path)
+			res, ok := get_resource_info(full_slash_path, entry)
+			if ok {
+				if res.Type == "file" {
+					res.ThumbnailUrl = s.thumbnail_url_prefix + full_url
+					res.FileUrl = s.file_url_prefix + full_url
+				}
+				resp.Resources = append(resp.Resources, res)
+			}
+		}
+
+
 	}
 
 	bin, err := json.Marshal(&resp)

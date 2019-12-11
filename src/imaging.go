@@ -5,12 +5,15 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"math"
 	"os"
 	"golang.org/x/image/draw"
 )
 
 const (
 	THUMBNAIL_SIZE = 384
+	MAX_WEIGHT = 20
+	WEIGHT_UNIT = 1200 * 1200
 )
 
 func generate_thumbnail(src *os.File) (image.Image, error) {
@@ -38,4 +41,19 @@ func generate_thumbnail(src *os.File) (image.Image, error) {
 
 	draw.ApproxBiLinear.Scale(dest_img, dest_rect, src_img, crop_box, draw.Src, nil)
 	return dest_img, nil
+}
+
+func calculate_weight(src *os.File) (int64, error) {
+
+	conf, _, err := image.DecodeConfig(src)
+	if err != nil {
+		return 0, err
+	}
+
+	w := float64(conf.Width)
+	h := float64(conf.Height)
+	t := w * h
+	s := math.Min(math.Ceil(t / WEIGHT_UNIT), float64(MAX_WEIGHT))
+
+	return int64(s), nil
 }

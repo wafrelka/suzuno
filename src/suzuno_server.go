@@ -5,6 +5,7 @@ import (
 	"path"
 	"strings"
 	"github.com/markbates/pkger"
+	"golang.org/x/sync/semaphore"
 )
 
 type FileSystemHandler func(string) (http.File, error)
@@ -37,6 +38,7 @@ type SuzunoServer struct {
 	root string
 	thumbnail_url_prefix string
 	file_url_prefix string
+	thumbnail_semaphore *semaphore.Weighted
 }
 
 func assign_sub_handler(mux *http.ServeMux, prefix_slash string, h http.Handler) {
@@ -54,6 +56,7 @@ func NewSuzunoServer(root string) *SuzunoServer {
 		root: root,
 		thumbnail_url_prefix: "/thumbnail",
 		file_url_prefix: "/file",
+		thumbnail_semaphore: semaphore.NewWeighted(20),
 	}
 	static_fs := FileSystemHandler(func(name string) (http.File, error) {
 		res_path := path.Join("/resources", strings.TrimPrefix(name, "/"))

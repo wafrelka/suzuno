@@ -117,7 +117,27 @@ func (s *SuzunoServer) serve_thumbnail(w http.ResponseWriter, req *http.Request)
 	}
 	defer file.Close()
 
+	weight, err := calculate_weight(file)
+	if err != nil {
+		err_msg := fmt.Sprintf("thumbnail error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "[%s, 500] thumbnail error: %v\n", req.URL.Path, err)
+		http.Error(w, err_msg, http.StatusInternalServerError)
+		return
+	}
+
+	sem_err := s.thumbnail_semaphore.Acquire(req.Context(), weight)
+	if sem_err != nil {
+		return
+	}
+	if is_closed(req) {
+		s.thumbnail_semaphore.Release(weight)
+		return
+	}
+
+	file.Seek(0, 0)
 	img, err := generate_thumbnail(file)
+	s.thumbnail_semaphore.Release(weight)
+
 	if err != nil {
 		err_msg := fmt.Sprintf("thumbnail error: %v\n", err)
 		fmt.Fprintf(os.Stderr, "[%s, 500] thumbnail error: %v\n", req.URL.Path, err)

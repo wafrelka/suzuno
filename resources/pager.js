@@ -120,7 +120,6 @@ class Pager {
 
 	_move_to(position, page_diff = 0, animation = false, ququeing = false) {
 
-		console.log("move_to(", position, ",", page_diff, ",", animation, ")");
 		this._position = position;
 
 		let trans_x_base = (this._extra_pages + page_diff) * -100;

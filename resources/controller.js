@@ -117,8 +117,10 @@ class Controller {
 		} else if(resources !== undefined) {
 
 			let formatted = format_resources_data(this._current.location, resources);
+			let files = formatted.filter((r) => r.type == "file");
+
 			this._list.update(formatted);
-			this._pager.update(formatted);
+			this._pager.update(files);
 		}
 
 		let p = pick_page(this._current.location);

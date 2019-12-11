@@ -140,6 +140,10 @@ body {
 	will-change: transform;
 }
 
+.load-completed .list-container {
+	transition: opacity var(--animation-speed-fast) steps(1, jump-end), visibility var(--animation-speed-fast) steps(1, jump-end);
+}
+
 .active.load-completed .list-container {
 	visibility: visible;
 	opacity: 1;

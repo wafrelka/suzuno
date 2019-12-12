@@ -33,6 +33,9 @@ class Controller {
 		this._navi.on_back_requested = (url) => {
 			this.refresh_with(url);
 		};
+		this._navi.on_link_clicked = (url) => {
+			this.refresh_with(url);
+		}
 		this._pager.on_back_requested = (url) => {
 			this.refresh_with(url);
 		};

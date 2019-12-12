@@ -6,6 +6,7 @@ class Navi {
 		this._menu = menu;
 
 		this._on_back_requested = () => {};
+		this._on_link_clicked = () => {};
 
 		this._setup_handlers();
 	}
@@ -14,11 +15,16 @@ class Navi {
 		this._on_back_requested = fn;
 	}
 
+	set on_link_clicked(fn) {
+		this._on_link_clicked = fn;
+	}
+
 	_setup_handlers() {
 
 		let back_link = this._header.querySelector(".header-back-link");
 		let menu_button = this._header.querySelector(".header-menu-button");
 		let menu_content = this._menu.querySelector(".menu-content");
+		let links = this._menu.querySelectorAll(".menu-navigation a");
 
 		back_link.addEventListener("click", (ev) => {
 			ev.preventDefault();
@@ -34,6 +40,13 @@ class Navi {
 				this.close_menu();
 			}
 		});
+		for(let l of links) {
+			l.addEventListener("click", (ev) => {
+				ev.preventDefault();
+				this._on_link_clicked(ev.currentTarget.href);
+				this.close_menu();
+			});
+		}
 	}
 
 	update_title(prefix, name, suffix) {

@@ -1,56 +1,12 @@
-import { get_directory_url, get_page_url, get_list_url, get_parent_url, get_canonical_list_url, pick_page } from "./url.js";
-import { fetch_json } from "./util.js";
+import {
+	make_canonical_list_url,
+	make_page_url,
+	make_list_url,
+	make_parent_url,
+	get_page,
+} from "./path.js";
+import { append_links, fetch_resources, get_resource_title } from "./fetch.js";
 
-function format_resources_data(base_url, resources) {
-
-	let formatted = [];
-	let file_count = 0;
-
-	for(let res of resources) {
-
-		if(res.type == "directory") {
-			formatted.push({
-				link: get_directory_url(base_url, res.name),
-				...res
-			});
-		} else if(res.type == "file") {
-			formatted.push({
-				link: get_page_url(base_url, file_count),
-				...res
-			});
-			file_count += 1;
-		} else {
-			formatted.push(res);
-		}
-	}
-
-	return formatted;
-}
-
-function fetch_resources(url) {
-
-	let url_path = new URL(url).pathname;
-
-	if(url_path.startsWith("/view/")) {
-		let res_path = url_path.replace(/^\/view/, "");
-		return fetch_json(`/meta/directory${res_path}`);
-	}
-
-	throw `unsupported resource url: ${url}`;
-}
-
-function get_resource_title(url) {
-
-	let url_path = new URL(url).pathname;
-
-	if(url_path.startsWith("/view/")) {
-		let res_path = url_path.replace(/^\/view/, "");
-		let res_orig = res_path.split("/").map((c) => decodeURIComponent(c)).join("/");
-		return res_orig;
-	}
-
-	throw `unsupported resource url: ${url}`;
-}
 
 class Controller {
 
@@ -81,7 +37,7 @@ class Controller {
 			this.refresh_with(url);
 		};
 		this._pager.on_page_changed = (page_num) => {
-			this.refresh_with(get_page_url(this._current.location, page_num));
+			this.refresh_with(make_page_url(this._current.location, page_num));
 		}
 	}
 
@@ -106,8 +62,8 @@ class Controller {
 			resources: resources === undefined ? prev.resources : resources,
 		};
 
-		let prev_list_url = (prev.location !== null ? get_canonical_list_url(prev.location) : null);
-		let cur_list_url = get_canonical_list_url(this._current.location);
+		let prev_list_url = (prev.location !== null ? make_canonical_list_url(prev.location) : null);
+		let cur_list_url = make_canonical_list_url(this._current.location);
 
 		if(prev_list_url === null || prev_list_url.pathname !== cur_list_url.pathname) {
 
@@ -115,16 +71,18 @@ class Controller {
 			this._list.reset();
 			this._request_resources_update(this._current.location);
 
-		} else if(resources !== undefined) {
+		}
 
-			let formatted = format_resources_data(this._current.location, resources);
+		if(resources !== undefined) {
+
+			let formatted = append_links(this._current.location, resources);
 			let files = formatted.filter((r) => r.type == "file");
 
 			this._list.update(formatted);
 			this._pager.update(files);
 		}
 
-		let p = pick_page(this._current.location);
+		let p = get_page(this._current.location);
 		if(p !== null) {
 			if(this._current.resources !== null) {
 				this._pager.change_page(p);
@@ -138,9 +96,9 @@ class Controller {
 			this._in_pager = false;
 		}
 
-		this._navi.update_back_link(get_parent_url(this._current.location));
+		this._navi.update_back_link(make_parent_url(this._current.location));
 		this._navi.update_title("", get_resource_title(this._current.location), "");
-		this._pager.update_back_link(get_list_url(this._current.location));
+		this._pager.update_back_link(make_list_url(this._current.location));
 	}
 
 	refresh_with(location, replacing = false) {
@@ -162,7 +120,7 @@ class Controller {
 		}
 		let p = pick_page(this._current.location);
 		if(p !== null && p + diff >= 0 && p + diff < this._current.resources.length) {
-			this.refresh_with(get_page_url(this._current.location, p + diff));
+			this.refresh_with(make_page_url(this._current.location, p + diff));
 		}
 	}
 
@@ -179,7 +137,7 @@ class Controller {
 	}
 
 	switch_to_list() {
-		this.refresh_with(get_list_url(this._current.location));
+		this.refresh_with(make_list_url(this._current.location));
 	}
 }
 

@@ -362,6 +362,18 @@ body {
 	margin-top: 0.5rem;
 }
 
+.menu-setting-link {
+	display: flex;
+	justify-content: center;
+	width: calc(100% - 0.6rem);
+	padding: 0.3rem;
+	padding-bottom: 0.4rem;
+	border-radius: 0.2rem;
+	font-size: 0.7rem;
+	background-color: var(--color-key);
+	color: var(--color-key-text);
+}
+
 /* pager */
 
 #pager {

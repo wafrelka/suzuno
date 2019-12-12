@@ -114,6 +114,12 @@ body {
 	flex-grow: 1;
 }
 
+.header-title-suffix {
+	margin-left: 0.4rem;
+	font-size: 0.6rem;
+	color: var(--color-key-sub-text);
+}
+
 .header-menu-button i {
 	font-size: 2.5rem;
 	line-height: 0.8;
@@ -360,6 +366,52 @@ body {
 
 .menu-navigation a + a {
 	margin-top: 0.5rem;
+}
+
+.menu-filter {
+	flex-grow: 1;
+}
+
+.menu-sort-keys {
+	display: flex;
+}
+
+.menu-sort-key {
+	padding: 0.1rem;
+}
+
+.menu-sort-key + .menu-sort-key {
+	margin-left: 0.25rem;
+}
+
+.menu-sort-key i {
+	display: block;
+	font-size: 1.6rem;
+}
+
+.menu-sort-key-arrow {
+	margin: -0.3rem 0;
+}
+
+.menu-filter-input {
+	width: calc(100% - 0.4rem);
+	padding: 0.3rem 0.2rem;
+	border: none;
+	border-bottom: solid 0.12rem var(--color-key-light);
+	outline: none;
+	font-size: 0.8rem;
+	font-family: sans-serif;
+	background-color: var(--color-base);
+	color: var(--color-base-text);
+	transition: border-bottom-color var(--animation-speed-base);
+}
+
+.menu-filter-input:focus {
+	border-bottom-color: var(--color-key);
+}
+
+.menu-section.menu-setting {
+	width: 100%;
 }
 
 .menu-setting-link {

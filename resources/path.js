@@ -7,6 +7,7 @@ function make_canonical_list_url(base_url) {
 	let url = new URL(base_url);
 	url.searchParams.delete(PAGE_KEY);
 	url.searchParams.delete(SORT_KEY);
+	url.searchParams.delete(FILTER_KEY);
 
 	if(url.pathname.endsWith("/")) {
 		url.pathname = url.pathname.slice(0, -1);

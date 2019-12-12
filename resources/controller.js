@@ -109,11 +109,11 @@ class Controller {
 				["date_down", rev(date_fn)],
 			]).get(cur_sort_key) || name_fn;
 
-			let processed = append_links(this._current.location, this._current.resources);
-			processed = processed.sort(comp_fn);
+			let processed = this._current.resources.sort(comp_fn);
 			if(cur_filter !== null) {
 				processed = processed.filter((r) => r.name.includes(cur_filter));
 			}
+			processed = append_links(this._current.location, processed);
 			this._current.processed = processed;
 
 			let files = processed.filter((r) => r.type == "file");

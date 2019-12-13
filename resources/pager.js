@@ -18,6 +18,7 @@ class Pager {
 
 		this._position = 0;
 		this._toolbox_activated_at = null;
+		this._rot_history = new Map();
 
 		this._move_animation = new AnimationDebouncer((param) => {
 			let container = this._root.querySelector(".pager-container");
@@ -50,6 +51,14 @@ class Pager {
 			v.querySelector(".pager-page-back-link").addEventListener("click", (ev) => {
 				ev.preventDefault();
 				this._on_back_requested(ev.currentTarget.href);
+			});
+			v.querySelector(".pager-page-rot-button").addEventListener("click", (ev) => {
+				let n = this._current_num;
+				if(n === null) {
+					return;
+				}
+				this._rot_history.set(n, (this._rot_history.get(n) || 0) + 1);
+				this._redraw_pages();
 			});
 			vi.addEventListener("load", () => { this._redraw_pages(); });
 			vi.addEventListener("error", () => { this._redraw_pages(); });
@@ -137,7 +146,26 @@ class Pager {
 		this._move_to(0);
 	}
 
-	_redraw_single_page(elem, page_num, delayed = false) {
+	_rotate_to(elem, direction, animated = false) {
+
+		let deg = direction * 90;
+		let landscape = (direction % 2 == 1);
+
+		if(animated) {
+			elem.classList.add("animated");
+		} else {
+			elem.classList.remove("animated");
+		}
+		if(landscape) {
+			elem.classList.add("landscape");
+		} else {
+			elem.classList.remove("landscape");
+		}
+
+		elem.style.transform = `rotate(${direction * 90}deg)`;
+	}
+
+	_redraw_single_page(elem, page_num, img_delayed, rot_animated) {
 
 		let img_elem = elem.querySelector(".pager-page-image");
 		let name_elem = elem.querySelector(".pager-page-name");
@@ -165,21 +193,24 @@ class Pager {
 		download_link_elem.href = res.file_url;
 
 		img_elem.dataset.src = res.file_url;
-		if(delayed === true) {
+		if(img_delayed === true) {
 			reset_img_src_if_incomplete(img_elem);
 		} else {
 			replace_img_src_if_needed(img_elem);
 		}
 
+		let rot = this._rot_history.get(page_num) || 0;
+		this._rotate_to(img_elem, rot, rot_animated);
+
 		return img_elem.complete;
 	}
 
-	_redraw_pages(current_priority = false) {
+	_redraw_pages(initial = false) {
 
 		let pages = this._root.querySelectorAll(".pager-page");
 		let cur_page = pages[this._extra_pages];
 
-		let cur_ok = this._redraw_single_page(cur_page, this._current_num);
+		let cur_ok = this._redraw_single_page(cur_page, this._current_num, false, !initial);
 
 		for(let d = -this._extra_pages; d <= this._extra_pages; d += 1) {
 			if(d === 0) {
@@ -187,7 +218,7 @@ class Pager {
 			}
 			let v = pages[d + this._extra_pages];
 			let p = (this._current_num !== null ? this._current_num + d : null);
-			this._redraw_single_page(v, p, !cur_ok && current_priority);
+			this._redraw_single_page(v, p, !cur_ok && initial, !initial);
 		}
 	}
 
@@ -299,6 +330,7 @@ class Pager {
 		this._resources = resources;
 		this._current_num = null;
 		this._redraw_pages(true);
+		this._rot_history = new Map();
 	}
 
 	update_back_link(back_link) {

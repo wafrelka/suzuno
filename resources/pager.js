@@ -1,5 +1,6 @@
 import { replace_img_src_if_needed, reset_img_src_if_incomplete } from "./imgsrc.js";
 import { SinglePointerHandler } from "./pointer.js";
+import { AnimationDebouncer } from "./animation.js";
 import { get_friendly_size_text } from "./util.js";
 
 class Pager {
@@ -16,8 +17,17 @@ class Pager {
 		this._resources = null;
 
 		this._position = 0;
-		this._move_requests = [];
 		this._toolbox_activated_at = null;
+
+		this._move_animation = new AnimationDebouncer((param) => {
+			let container = this._root.querySelector(".pager-container");
+			if(param.animation === true) {
+				container.classList.add("animated");
+			} else {
+				container.classList.remove("animated");
+			}
+			container.style.transform = param.transform;
+		});
 
 		this._on_page_changed = () => {};
 		this._on_back_requested = () => {};
@@ -96,29 +106,7 @@ class Pager {
 		this._on_back_requested = fn;
 	}
 
-	_set_transform() {
-
-		if(this._move_requests.length === 0) {
-			return;
-		}
-		let t = this._move_requests.shift();
-
-		let container = this._root.querySelector(".pager-container");
-
-		if(t.animation === true) {
-			container.classList.add("animated");
-		} else {
-			container.classList.remove("animated");
-		}
-
-		container.style.transform = t.transform;
-
-		if(this._move_requests.length > 0) {
-			window.requestAnimationFrame(this._set_transform.bind(this));
-		}
-	}
-
-	_move_to(position, page_diff = 0, animation = false, ququeing = false) {
+	_move_to(position, page_diff = 0, animation = false, queueing = false) {
 
 		this._position = position;
 
@@ -130,14 +118,15 @@ class Pager {
 			animation: animation,
 		};
 
-		if(this._move_requests.length === 0) {
-			this._move_requests.push(arg);
-			window.requestAnimationFrame(this._set_transform.bind(this));
-		} else if(ququeing === true) {
-			this._move_requests.push(arg);
+		if(queueing === true) {
+			this._move_animation.push_after(arg);
 		} else {
-			this._move_requests[0] = arg;
+			this._move_animation.push(arg);
 		}
+	}
+
+	_move_to_base_animated_after() {
+		this._move_to(0, 0, true, true);
 	}
 
 	_move_to_base_animated() {
@@ -271,7 +260,7 @@ class Pager {
 			}
 
 			this._move_to(this._position, -diff);
-			this._move_to(0, 0, true, true);
+			this._move_to_base_animated_after();
 
 		} else {
 

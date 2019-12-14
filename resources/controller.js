@@ -216,17 +216,17 @@ class Controller {
 			let c_all = cur.resources.length;
 			let c_shown = cur.processed.length;
 			if(c_all != c_shown) {
-				suffix_items.push(`${c_shown}/${c_all}`);
+				suffix_items.push(`(${c_shown}/${c_all})`);
 			} else {
-				suffix_items.push(`${c_all}`);
+				suffix_items.push(`(${c_all})`);
 			}
 		}
 
 		if(cur_sort_key !== null) {
-			suffix_items.push(`sort=${cur_sort_key}`);
+			suffix_items.push(`${cur_sort_key.replace("_", ":")}`);
 		}
 		if(cur_filter !== null) {
-			suffix_items.push(`filter="${cur_filter}"`);
+			suffix_items.push(`[${cur_filter}]`);
 		}
 
 		let suffix = suffix_items.join(", ");

@@ -117,7 +117,7 @@ body {
 
 .header-title-suffix {
 	margin-left: 0.4rem;
-	font-size: 0.6rem;
+	font-size: 0.7rem;
 	color: var(--color-key-sub-text);
 }
 
@@ -583,7 +583,7 @@ body {
 }
 
 .pager-page-size {
-	font-size: 0.6rem;
+	font-size: 0.7rem;
 	margin-left: 0.4rem;
 	color: var(--color-key-sub-text);
 }

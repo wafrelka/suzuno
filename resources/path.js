@@ -99,7 +99,8 @@ function get_directory(base_url) {
 	if(url.pathname.endsWith("/")) {
 		return null;
 	}
-	return url.pathname.slice(url.pathname.lastIndexOf("/") + 1);
+	let escaped = url.pathname.slice(url.pathname.lastIndexOf("/") + 1);
+	return decodeURIComponent(escaped);
 }
 
 function is_parent(target_url, parent_url) {

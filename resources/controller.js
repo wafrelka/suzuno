@@ -122,6 +122,7 @@ class Controller {
 			this._update(undefined, resp.resources);
 		} catch(err) {
 			this._list.set_error_message(`failed to load: ${err}`);
+			console.log(err);
 		}
 	}
 

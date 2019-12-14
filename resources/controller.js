@@ -172,7 +172,11 @@ class Controller {
 
 		if(location_updated !== undefined) {
 			if(prev.location !== null && is_parent(prev.location, cur.location)) {
-				cur.highlighted = prev.location;
+				if(get_page(prev.location) !== null) {
+					cur.highlighted = prev.location;
+				} else {
+					cur.highlighted = make_canonical_list_url(prev.location);
+				}
 			} else {
 				cur.highlighted = null;
 			}

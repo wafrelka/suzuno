@@ -67,7 +67,6 @@ class Navi {
 			});
 		}
 		filter_input.addEventListener("change", (ev) => {
-			console.log("change");
 			this._on_filter_updated(ev.currentTarget.value);
 			this.close_menu();
 		});

@@ -44,8 +44,9 @@ function make_list_url(base_url) {
 function make_parent_url(base_url) {
 	let url = make_canonical_list_url(base_url);
 	let second_idx = url.pathname.indexOf("/", 1);
-	if(second_idx !== -1 && second_idx !== url.pathname.length - 1) {
-		url.pathname = url.pathname.slice(0, url.pathname.lastIndexOf("/"));
+	if(second_idx !== -1) {
+		let idx = Math.max(second_idx + 1, url.pathname.lastIndexOf("/"));
+		url.pathname = url.pathname.slice(0, idx);
 	}
 	return url;
 }

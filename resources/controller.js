@@ -79,6 +79,7 @@ class Controller {
 
 		this._on_push_state = () => {};
 
+		this._history = new Map();
 		this._current = {
 			location: null,
 			resources: null,
@@ -175,12 +176,23 @@ class Controller {
 			} else {
 				cur.highlighted = null;
 			}
+			if(prev.location !== null && is_parent(cur.location, prev.location)) {
+				let log = {
+					scroll: this._list.dump_scroll_state(),
+					location: new URL(prev.location),
+				};
+				this._history.set(prev_list_url.toString(), log);
+			}
 		}
 
 		if(cur.resources !== null && cur.highlighted !== null) {
 			let same_fn = (res) => res.link !== undefined && same_url(res.link, cur.highlighted);
 			let idx = cur.processed.findIndex(same_fn);
 			if(idx !== -1) {
+				let log = this._history.get(cur_list_url.toString());
+				if(log !== undefined) {
+					this._list.restore_scroll_state(log.scroll);
+				}
 				this._list.scroll_to(idx);
 			}
 		}
@@ -221,7 +233,13 @@ class Controller {
 		let title = get_resource_title(cur.location);
 		this._navi.update_title("", title, suffix);
 
-		this._navi.update_back_link(make_parent_url(cur.location));
+		let parent = make_parent_url(cur.location);
+		let log = this._history.get(parent.toString());
+		if(log !== undefined) {
+			parent = log.location;
+		}
+		this._navi.update_back_link(parent);
+
 		for(let k of ["name_up", "name_down", "date_up", "date_down"]) {
 			let u = make_sorted_url(cur.location, k);
 			this._navi.update_sort_key_link(k, u);
@@ -278,7 +296,12 @@ class Controller {
 	}
 
 	move_to_parent() {
-		this.refresh_with(make_parent_url(this._current.location));
+		let parent = make_parent_url(this._current.location);
+		let log = this._history.get(parent.toString());
+		if(log !== undefined) {
+			parent = log.location;
+		}
+		this.refresh_with(parent);
 	}
 }
 

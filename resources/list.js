@@ -131,6 +131,14 @@ class List {
 		container.scrollBy(0, diff);
 	}
 
+	dump_scroll_state() {
+		return this._root.querySelector(".list-container").scrollTop;
+	}
+
+	restore_scroll_state(state) {
+		this._root.querySelector(".list-container").scrollTo(0, state);
+	}
+
 	update(resources) {
 
 		/*

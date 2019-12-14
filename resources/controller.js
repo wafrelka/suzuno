@@ -242,6 +242,10 @@ class Controller {
 		return apply_or_null(get_page, this._current.location) !== null;
 	}
 
+	get menu_expanded() {
+		return this._navi.menu_expanded;
+	}
+
 	_move_page(diff) {
 		if(this._current.resources === null) {
 			return;
@@ -266,6 +270,14 @@ class Controller {
 
 	switch_to_list() {
 		this.refresh_with(make_list_url(this._current.location));
+	}
+
+	close_menu() {
+		this._navi.close_menu();
+	}
+
+	move_to_parent() {
+		this.refresh_with(make_parent_url(this._current.location));
 	}
 }
 

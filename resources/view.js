@@ -47,6 +47,16 @@ document.addEventListener("DOMContentLoaded", () => {
 					ctrler.toggle_toolbox();
 					break;
 			}
+		} else {
+			switch(ev.code) {
+				case "Escape":
+					ev.preventDefault();
+					if(ctrler.menu_expanded) {
+						ctrler.close_menu();
+					} else {
+						ctrler.move_to_parent();
+					}
+			}
 		}
 	})
 

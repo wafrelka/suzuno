@@ -29,6 +29,10 @@ class Navi {
 		this._on_filter_updated = fn;
 	}
 
+	get menu_expanded() {
+		return this._menu.classList.contains("expanded");
+	}
+
 	_setup_handlers() {
 
 		let back_link = this._header.querySelector(".header-back-link");

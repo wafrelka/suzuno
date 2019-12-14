@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"image/jpeg"
@@ -11,6 +12,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const (
@@ -89,30 +91,67 @@ func is_closed(req *http.Request) bool {
 	}
 }
 
-func (s *SuzunoServer) serve_file(w http.ResponseWriter, req *http.Request) {
-	file_path := get_native_path(s.root, req.URL.Path)
-	http.ServeFile(w, req, file_path)
-}
+func open_file_or_close(path, etag_prefix string, w http.ResponseWriter, req *http.Request) *os.File {
 
-func (s *SuzunoServer) serve_thumbnail(w http.ResponseWriter, req *http.Request) {
-
-	file_path := get_native_path(s.root, req.URL.Path)
-
-	stat, err := os.Stat(file_path)
+	stat, err := os.Stat(path)
 	if err != nil && !os.IsNotExist(err) {
 		http.Error(w, "stat failed", http.StatusInternalServerError)
-		return
+		return nil
 	}
 
 	ok := (err == nil && stat.Mode().IsRegular())
 	if !ok {
 		http.NotFound(w, req)
-		return
+		return nil
 	}
 
-	file, err := os.Open(file_path)
+	file, err := os.Open(path)
 	if err != nil {
 		http.Error(w, "IO failed", http.StatusInternalServerError)
+		return nil
+	}
+
+	hasher := sha1.New()
+	_, err = io.Copy(hasher, file)
+	if err != nil {
+		http.Error(w, "IO failed", http.StatusInternalServerError)
+		file.Close()
+		return nil
+	}
+	etag := fmt.Sprintf("\"%s%x\"", etag_prefix, hasher.Sum(nil))
+
+	if match := req.Header.Get("If-None-Match"); match != "" {
+		if strings.Contains(match, etag) {
+			w.WriteHeader(http.StatusNotModified)
+			file.Close()
+			return nil
+		}
+	}
+	w.Header().Set("Etag", etag)
+
+	file.Seek(0, 0)
+	return file
+}
+
+func (s *SuzunoServer) serve_file(w http.ResponseWriter, req *http.Request) {
+
+	file_path := get_native_path(s.root, req.URL.Path)
+	file := open_file_or_close(file_path, "file:v1:", w, req)
+
+	if file == nil {
+		return
+	}
+	defer file.Close()
+
+	http.ServeContent(w, req, file_path, time.Time{}, file)
+}
+
+func (s *SuzunoServer) serve_thumbnail(w http.ResponseWriter, req *http.Request) {
+
+	file_path := get_native_path(s.root, req.URL.Path)
+	file := open_file_or_close(file_path, "thumbnail:v1:", w, req)
+
+	if file == nil {
 		return
 	}
 	defer file.Close()
@@ -134,7 +173,6 @@ func (s *SuzunoServer) serve_thumbnail(w http.ResponseWriter, req *http.Request)
 		return
 	}
 
-	file.Seek(0, 0)
 	img, err := generate_thumbnail(file)
 	s.thumbnail_semaphore.Release(weight)
 

@@ -18,6 +18,7 @@ const (
 
 func generate_thumbnail(src *os.File) (image.Image, error) {
 
+	src.Seek(0, 0)
 	src_img, _, err := image.Decode(src)
 	if err != nil {
 		return nil, err
@@ -45,6 +46,7 @@ func generate_thumbnail(src *os.File) (image.Image, error) {
 
 func calculate_weight(src *os.File) (int64, error) {
 
+	src.Seek(0, 0)
 	conf, _, err := image.DecodeConfig(src)
 	if err != nil {
 		return 0, err

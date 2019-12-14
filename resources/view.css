@@ -22,6 +22,7 @@
 	--color-error-text: #ffffff;
 	--animation-speed-base: 0.3s;
 	--animation-speed-fast: 0.2s;
+	--animation-speed-slow: 2.0s;
 	--animation-speed-loading: 1.0s;
 	--animation-delay-loading: -0.4s;
 }
@@ -162,6 +163,7 @@ body {
 	position: relative; /* for .list-item-inner */
 	height: 0;
 	padding-bottom: 100%;
+	background-color: var(--color-key);
 }
 
 .list-item-link {
@@ -171,6 +173,7 @@ body {
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
+	background-color: var(--color-base);
 }
 
 .list-item-image-container, .list-item-description {
@@ -238,6 +241,15 @@ body {
 
 .list-item.hidden-item .list-item-link {
 	display: none;
+}
+
+.list-item.highlighted .list-item-link {
+	animation: highlighted var(--animation-speed-slow);
+}
+
+@keyframes highlighted {
+	0% { opacity: 0.1; }
+	100% { opacity: 1; }
 }
 
 /* list-loading-animation */

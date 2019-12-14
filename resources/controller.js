@@ -9,6 +9,7 @@ import {
 	get_page,
 	get_sort_key,
 	get_filter_text,
+	is_parent,
 	same_url,
 } from "./path.js";
 import { fetch_resources, get_resource_title } from "./fetch.js";
@@ -82,6 +83,7 @@ class Controller {
 			location: null,
 			resources: null,
 			processed: null,
+			highlighted: null,
 		};
 
 		this._list.on_file_selected = (url) => {
@@ -162,7 +164,24 @@ class Controller {
 
 			let files = cur.processed.filter((r) => r.type == "file");
 			this._list.update(cur.processed);
+			this._list.reset_scroll();
 			this._pager.update(files);
+		}
+
+		if(location_updated !== undefined) {
+			if(prev.location !== null && is_parent(prev.location, cur.location)) {
+				cur.highlighted = prev.location;
+			} else {
+				cur.highlighted = null;
+			}
+		}
+
+		if(cur.resources !== null && cur.highlighted !== null) {
+			let same_fn = (res) => res.link !== undefined && same_url(res.link, cur.highlighted);
+			let idx = cur.processed.findIndex(same_fn);
+			if(idx !== -1) {
+				this._list.scroll_to(idx);
+			}
 		}
 
 		let p = get_page(cur.location);

@@ -39,4 +39,8 @@ class AnimationDebouncer {
 	}
 }
 
-export { AnimationDebouncer }
+function request_before_redraw(fn) {
+	window.requestAnimationFrame(fn);
+}
+
+export { AnimationDebouncer, request_before_redraw }

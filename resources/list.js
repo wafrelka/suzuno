@@ -1,4 +1,5 @@
 import { replace_img_src_if_needed, reset_img_src_if_incomplete } from "./imgsrc.js";
+import { request_before_redraw } from "./animation.js";
 
 class List {
 
@@ -84,6 +85,50 @@ class List {
 			img_elem.dataset.src = "";
 			img_elem.src = "";
 		}
+	}
+
+	reset_scroll() {
+
+		let container = this._root.querySelector(".list-container");
+
+		for(let highlighted of container.querySelectorAll(".highlighted")) {
+			highlighted.classList.remove("highlighted");
+		}
+		container.scrollTo(0, 0);
+	}
+
+	scroll_to(index) {
+
+		let container = this._root.querySelector(".list-container");
+		let items = container.children; // items[0] is the template element
+		if(index < 0 || index >= items.length - 1) {
+			return;
+		}
+		let item = items[index + 1];
+
+		for(let highlighted of container.querySelectorAll(".highlighted")) {
+			highlighted.classList.remove("highlighted");
+		}
+		request_before_redraw(() => item.classList.add("highlighted"));
+
+		let item_height = item.offsetHeight;
+		let item_top = item.offsetTop;
+		let item_bottom = item_top + item_height;
+
+		let view_height = container.offsetHeight;
+		let view_top = container.scrollTop;
+		let view_bottom = view_top + view_height;
+
+		let top_diff = view_top - item_top;
+		let bottom_diff = item_bottom - view_bottom;
+		let diff = 0;
+
+		if(top_diff > 0) {
+			diff = -(top_diff + item_height * 0.2);
+		} else if(bottom_diff > 0) {
+			diff = +(bottom_diff + item_height * 0.2);
+		}
+		container.scrollBy(0, diff);
 	}
 
 	update(resources) {

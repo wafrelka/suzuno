@@ -94,6 +94,32 @@ function get_filter_text(base_url) {
 	return f_str;
 }
 
+function get_directory(base_url) {
+	let url = make_canonical_list_url(base_url);
+	if(url.pathname.endsWith("/")) {
+		return null;
+	}
+	return url.pathname.slice(url.pathname.lastIndexOf("/") + 1);
+}
+
+function is_parent(target_url, parent_url) {
+
+	let tp = get_page(target_url);
+	let pp = get_page(parent_url);
+	if(pp === null && same_url(make_page_url(parent_url, tp), target_url)) {
+		return true;
+	}
+
+	let d = get_directory(target_url);
+	let tl = make_canonical_list_url(target_url);
+	let pl = make_canonical_list_url(parent_url);
+	if(d !== null && same_url(tl, make_directory_url(pl, d))) {
+		return true;
+	}
+
+	return false;
+}
+
 function same_url(left, right) {
 	return left.toString() === right.toString();
 }
@@ -109,5 +135,7 @@ export {
 	get_page,
 	get_sort_key,
 	get_filter_text,
+	get_directory,
+	is_parent,
 	same_url,
 }

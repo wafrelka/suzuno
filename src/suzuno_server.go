@@ -49,6 +49,16 @@ func assign_sub_handler(mux *http.ServeMux, prefix_slash string, h http.Handler)
 	mux.Handle(prefix_slash, http.StripPrefix(prefix_noslash, h))
 }
 
+func assign_single_point(mux *http.ServeMux, path string, h http.Handler) {
+	mux.Handle(path, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == path {
+			h.ServeHTTP(w, req)
+		} else {
+			http.NotFound(w, req)
+		}
+	}))
+}
+
 func NewSuzunoServer(root string) *SuzunoServer {
 
 	s := SuzunoServer{
@@ -70,13 +80,7 @@ func NewSuzunoServer(root string) *SuzunoServer {
 	assign_sub_handler(s.mux, "/meta/directory/", http.HandlerFunc(s.serve_meta_directory))
 
 	s.mux.Handle("/view/", PkgerSingleFileHandler("/resources/view.html"))
-	s.mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.Path == "/" {
-			http.Redirect(w, req, "/view/", http.StatusFound)
-		} else {
-			http.NotFound(w, req)
-		}
-	}))
+	assign_single_point(s.mux, "/", http.RedirectHandler("/view/", http.StatusFound))
 
 	return &s
 }

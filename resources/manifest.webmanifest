@@ -1,0 +1,19 @@
+{
+	"name": "Suzuno Viewer",
+	"short_name": "suzuno",
+	"description": "Suzuno Viewer",
+
+	"background_color": "#eff7ff",
+	"theme_color": "#4e5f7b",
+
+	"start_url": "/view/",
+	"display": "fullscreen",
+
+	"icons": [
+		{
+			"src": "/static/icon.png",
+			"sizes": "192x192",
+			"type": "image/png"
+		}
+	]
+}

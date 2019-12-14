@@ -227,7 +227,7 @@ class Controller {
 		if(this._current.resources === null) {
 			return;
 		}
-		let p = pick_page(this._current.location);
+		let p = apply_or_null(get_page, this._current.location);
 		if(p !== null && p + diff >= 0 && p + diff < this._current.resources.length) {
 			this.refresh_with(make_page_url(this._current.location, p + diff));
 		}

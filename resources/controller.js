@@ -1,6 +1,7 @@
 import {
 	make_canonical_list_url,
 	make_page_url,
+	make_directory_url,
 	make_list_url,
 	make_parent_url,
 	make_sorted_url,
@@ -8,8 +9,64 @@ import {
 	get_page,
 	get_sort_key,
 	get_filter_text,
+	same_url,
 } from "./path.js";
-import { append_links, fetch_resources, get_resource_title } from "./fetch.js";
+import { fetch_resources, get_resource_title } from "./fetch.js";
+
+function append_links(base_url, resources) {
+
+	let formatted = [];
+	let file_count = 0;
+
+	for(let res of resources) {
+
+		if(res.type == "directory") {
+			formatted.push({
+				link: make_directory_url(base_url, res.name),
+				...res
+			});
+		} else if(res.type == "file") {
+			formatted.push({
+				link: make_page_url(base_url, file_count),
+				...res
+			});
+			file_count += 1;
+		} else {
+			formatted.push(res);
+		}
+	}
+
+	return formatted;
+}
+
+function compute_processed_resources(resources, sort_key, filter) {
+
+	let c = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+	let name_fn = (a, b) => (c.compare(a.name, b.name));
+	let date_fn = (a, b) => (a.modified_at - b.modified_at);
+	let rev = (f) => ((a, b) => (-f(a, b)));
+
+	let comp_fn = new Map([
+		["name_up", name_fn],
+		["name_down", rev(name_fn)],
+		["date_up", date_fn],
+		["date_down", rev(date_fn)],
+	]).get(sort_key) || name_fn;
+
+	let processed = resources.sort(comp_fn);
+	if(filter !== null) {
+		processed = processed.filter((r) => r.name.includes(filter));
+	}
+
+	return processed;
+}
+
+function apply_or_null(f, x) {
+	if(x !== null) {
+		return f(x);
+	}
+	return null;
+}
 
 class Controller {
 
@@ -18,7 +75,6 @@ class Controller {
 		this._list = list;
 		this._navi = navi;
 		this._pager = pager;
-		this._in_pager = false;
 
 		this._on_push_state = () => {};
 
@@ -67,83 +123,70 @@ class Controller {
 		}
 	}
 
-	_update(location = undefined, resources = undefined) {
+	_update(location_updated = undefined, resources_updated = undefined) {
 
 		let prev = this._current;
-		this._current = {
-			location: new URL(location === undefined ? prev.location : location),
-			resources: resources === undefined ? prev.resources : resources,
-			processed: prev.processed,
-		};
+		let cur = { ...prev };
+		this._current = cur;
 
-		let prev_list_url = (prev.location !== null ? make_canonical_list_url(prev.location) : null);
-		let cur_list_url = make_canonical_list_url(this._current.location);
-
-		if(prev_list_url === null || prev_list_url.pathname !== cur_list_url.pathname) {
-
-			this._current.resources = null;
-			this._current.processed = null;
-			this._list.reset();
-			this._request_resources_update(this._current.location);
-
+		if(location_updated !== undefined) {
+			cur.location = new URL(location_updated);
+		}
+		if(resources_updated !== undefined) {
+			cur.resources = resources_updated;
+			cur.processed = null;
 		}
 
-		let prev_sort_key = (prev.location !== null ? get_sort_key(prev.location) : null);
-		let cur_sort_key = get_sort_key(this._current.location);
-		let prev_filter = (prev.location !== null ? get_filter_text(prev.location) : null);
-		let cur_filter = get_filter_text(this._current.location);
+		let prev_list_url = apply_or_null(make_canonical_list_url, prev.location);
+		let cur_list_url = make_canonical_list_url(cur.location);
 
-		let order_changed = (prev_sort_key !== cur_sort_key || prev_filter !== cur_filter);
+		if(prev_list_url === null || !same_url(prev_list_url, cur_list_url)) {
 
-		if(resources !== undefined || (this._current.resources !== null && order_changed)) {
+			cur.resources = null;
+			cur.processed = null;
+			this._list.reset();
+			this._request_resources_update(cur.location);
+		}
 
-			let c = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
-			let name_fn = (a, b) => (c.compare(a.name, b.name));
-			let date_fn = (a, b) => (a.modified_at - b.modified_at);
-			let rev = (f) => ((a, b) => (-f(a, b)));
+		let prev_sort_key = apply_or_null(get_sort_key, prev.location);
+		let cur_sort_key = get_sort_key(cur.location);
+		let prev_filter = apply_or_null(get_filter_text, prev.location);
+		let cur_filter = get_filter_text(cur.location);
 
-			let comp_fn = new Map([
-				["name_up", name_fn],
-				["name_down", rev(name_fn)],
-				["date_up", date_fn],
-				["date_down", rev(date_fn)],
-			]).get(cur_sort_key) || name_fn;
+		let changed = (prev_sort_key !== cur_sort_key || prev_filter !== cur_filter);
 
-			let processed = this._current.resources.sort(comp_fn);
-			if(cur_filter !== null) {
-				processed = processed.filter((r) => r.name.includes(cur_filter));
-			}
-			processed = append_links(this._current.location, processed);
-			this._current.processed = processed;
+		if(resources_updated !== undefined || (cur.resources !== null && changed)) {
 
-			let files = processed.filter((r) => r.type == "file");
-			this._list.update(processed);
+			cur.processed = compute_processed_resources(cur.resources, cur_sort_key, cur_filter);
+			cur.processed = append_links(cur.location, cur.processed);
+
+			let files = cur.processed.filter((r) => r.type == "file");
+			this._list.update(cur.processed);
 			this._pager.update(files);
 		}
 
-		let p = get_page(this._current.location);
+		let p = get_page(cur.location);
+
 		if(p !== null) {
-			if(this._current.resources !== null) {
+			if(cur.resources !== null) {
 				this._pager.change_page(p);
 			}
 			this._pager.activate();
 			this._list.deactivate_partial_thumbnails();
-			this._in_pager = true;
 		} else {
 			this._pager.deactivate();
 			this._list.activate_thumbnails();
-			this._in_pager = false;
 		}
 
 		let suffix_items = [];
 
-		if(this._current.resources !== null) {
-			let c1 = this._current.resources.length;
-			let c2 = this._current.processed.length;
-			if(c1 != c2) {
-				suffix_items.push(`${c2}/${c1}`);
+		if(cur.resources !== null) {
+			let c_all = cur.resources.length;
+			let c_shown = cur.processed.length;
+			if(c_all != c_shown) {
+				suffix_items.push(`${c_shown}/${c_all}`);
 			} else {
-				suffix_items.push(`${c1}`);
+				suffix_items.push(`${c_all}`);
 			}
 		}
 
@@ -155,15 +198,16 @@ class Controller {
 		}
 
 		let suffix = suffix_items.join(", ");
+		let title = get_resource_title(cur.location);
+		this._navi.update_title("", title, suffix);
 
-		this._navi.update_title("", get_resource_title(this._current.location), suffix);
-		this._navi.update_back_link(make_parent_url(this._current.location));
+		this._navi.update_back_link(make_parent_url(cur.location));
 		for(let k of ["name_up", "name_down", "date_up", "date_down"]) {
-			let u = make_sorted_url(this._current.location, k);
+			let u = make_sorted_url(cur.location, k);
 			this._navi.update_sort_key_link(k, u);
 		}
 		this._navi.update_filter_text(cur_filter || "");
-		this._pager.update_back_link(make_list_url(this._current.location));
+		this._pager.update_back_link(make_list_url(cur.location));
 	}
 
 	refresh_with(location, replacing = false) {
@@ -176,7 +220,7 @@ class Controller {
 	}
 
 	get in_pager() {
-		return this._in_pager;
+		return apply_or_null(get_page, this._current.location) !== null;
 	}
 
 	_move_page(diff) {

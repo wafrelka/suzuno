@@ -94,6 +94,10 @@ function get_filter_text(base_url) {
 	return f_str;
 }
 
+function same_url(left, right) {
+	return left.toString() === right.toString();
+}
+
 export {
 	make_canonical_list_url,
 	make_directory_url,
@@ -105,4 +109,5 @@ export {
 	get_page,
 	get_sort_key,
 	get_filter_text,
+	same_url,
 }

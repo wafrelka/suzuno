@@ -10,6 +10,7 @@ import {
 	get_sort_key,
 	get_filter_text,
 	is_parent,
+	is_parent_list,
 	same_url,
 } from "./path.js";
 import { fetch_resources, get_resource_title } from "./fetch.js";
@@ -180,12 +181,12 @@ class Controller {
 			} else {
 				cur.highlighted = null;
 			}
-			if(prev.location !== null && is_parent(cur.location, prev.location)) {
+			if(prev.location !== null && is_parent_list(cur.location, prev.location)) {
 				let log = {
 					scroll: this._list.dump_scroll_state(),
 					location: new URL(prev.location),
 				};
-				this._history.set(prev_list_url.toString(), log);
+				this._history.set(prev_list_url.href, log);
 			}
 		}
 
@@ -193,7 +194,7 @@ class Controller {
 			let same_fn = (res) => res.link !== undefined && same_url(res.link, cur.highlighted);
 			let idx = cur.processed.findIndex(same_fn);
 			if(idx !== -1) {
-				let log = this._history.get(cur_list_url.toString());
+				let log = this._history.get(cur_list_url.href);
 				if(log !== undefined) {
 					this._list.restore_scroll_state(log.scroll);
 				}
@@ -238,7 +239,7 @@ class Controller {
 		this._navi.update_title("", title, suffix);
 
 		let parent = make_parent_url(cur.location);
-		let log = this._history.get(parent.toString());
+		let log = this._history.get(parent.href);
 		if(log !== undefined) {
 			parent = log.location;
 		}
@@ -301,7 +302,7 @@ class Controller {
 
 	move_to_parent() {
 		let parent = make_parent_url(this._current.location);
-		let log = this._history.get(parent.toString());
+		let log = this._history.get(parent.href);
 		if(log !== undefined) {
 			parent = log.location;
 		}

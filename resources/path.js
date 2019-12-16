@@ -104,26 +104,25 @@ function get_directory(base_url) {
 	return decodeURIComponent(escaped);
 }
 
-function is_parent(target_url, parent_url) {
-
-	let tp = get_page(target_url);
-	let pp = get_page(parent_url);
-	if(pp === null && same_url(make_page_url(parent_url, tp), target_url)) {
-		return true;
-	}
-
-	let d = get_directory(target_url);
-	let tl = make_canonical_list_url(target_url);
+function is_parent_list(list_url, parent_url) {
+	let d = get_directory(list_url);
+	let tl = make_canonical_list_url(list_url);
 	let pl = make_canonical_list_url(parent_url);
-	if(d !== null && same_url(tl, make_directory_url(pl, d))) {
-		return true;
-	}
+	return d !== null && same_url(tl, make_directory_url(pl, d));
+}
 
-	return false;
+function is_parent_page(page_url, parent_url) {
+	let tp = get_page(page_url);
+	let pp = get_page(parent_url);
+	return pp === null && same_url(make_page_url(parent_url, tp), page_url);
+}
+
+function is_parent(target_url, parent_url) {
+	return is_parent_list(target_url, parent_url) || is_parent_page(target_url, parent_url);
 }
 
 function same_url(left, right) {
-	return left.toString() === right.toString();
+	return left.href === right.href;
 }
 
 export {
@@ -138,6 +137,8 @@ export {
 	get_sort_key,
 	get_filter_text,
 	get_directory,
+	is_parent_list,
+	is_parent_page,
 	is_parent,
 	same_url,
 }

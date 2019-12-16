@@ -163,7 +163,6 @@ body {
 	position: relative; /* for .list-item-inner */
 	height: 0;
 	padding-bottom: 100%;
-	background-color: var(--color-key);
 }
 
 .list-item-link {
@@ -173,7 +172,6 @@ body {
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
-	background-color: var(--color-base);
 }
 
 .list-item-image-container, .list-item-description {
@@ -243,7 +241,12 @@ body {
 	display: none;
 }
 
+.list-item.highlighted {
+	background-color: var(--color-key);
+}
+
 .list-item.highlighted .list-item-link {
+	background-color: var(--color-base);
 	animation: highlighted var(--animation-speed-slow);
 }
 

@@ -8,12 +8,11 @@ async function fetch_json(url) {
 
 function get_friendly_size_text(size) {
 	let units = ["", "K", "M", "G", "T"];
-	for(let i = 0; i < units.length; i += 1) {
-		let single = Math.pow(1000, i);
-		if(size >= 1000 * single && i + 1 < units.length) {
+	for(let i = 0, base = 1; i < units.length; i += 1, base = base * 1000) {
+		if(size >= 1000 * base && i + 1 < units.length) {
 			continue;
 		}
-		return `${(size / single).toFixed(1)} ${units[i]}B`;
+		return `${(size / base).toFixed(1)} ${units[i]}B`;
 	}
 }
 

@@ -149,7 +149,7 @@ class Pager {
 	_rotate_to(elem, direction, animated = false) {
 
 		let deg = direction * 90;
-		let landscape = (direction % 2 == 1);
+		let landscape = ((direction & 1) == 1);
 
 		if(animated) {
 			elem.classList.add("animated");
@@ -162,7 +162,7 @@ class Pager {
 			elem.classList.remove("landscape");
 		}
 
-		elem.style.transform = `rotate(${direction * 90}deg)`;
+		elem.style.transform = `rotate(${deg}deg)`;
 	}
 
 	_redraw_single_page(elem, page_num, img_delayed, rot_animated) {

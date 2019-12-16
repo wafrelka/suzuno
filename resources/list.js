@@ -56,17 +56,17 @@ class List {
 	activate_thumbnails() {
 		this._active = true;
 		this._root.classList.add("active");
-		for(let img_elem of this._root.querySelectorAll(".list-item-thumbnail")) {
-			if(img_elem.dataset.state == "visible") {
-				replace_img_src_if_needed(img_elem);
-			}
+		let visible_elems = this._root.querySelectorAll(".list-item-thumbnail[data-state=\"visible\"]");
+		for(let img_elem of visible_elems) {
+			replace_img_src_if_needed(img_elem);
 		}
 	}
 
 	deactivate_partial_thumbnails() {
 		this._active = false;
 		this._root.classList.remove("active");
-		for(let img_elem of this._root.querySelectorAll(".list-item-thumbnail")) {
+		let visible_elems = this._root.querySelectorAll(".list-item-thumbnail[data-state=\"visible\"]");
+		for(let img_elem of visible_elems) {
 			reset_img_src_if_incomplete(img_elem);
 		}
 	}
@@ -81,7 +81,8 @@ class List {
 		this._root.classList.remove("load-completed");
 		this._root.classList.remove("load-failed");
 		this._root.querySelector(".list-loading-description").textContent = "";
-		for(let img_elem of this._root.querySelectorAll(".list-item-thumbnail")) {
+		let visible_elems = this._root.querySelectorAll(".list-item-thumbnail[data-state=\"visible\"]");
+		for(let img_elem of visible_elems) {
 			img_elem.dataset.src = "";
 			img_elem.src = "";
 		}

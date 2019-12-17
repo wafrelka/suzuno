@@ -159,7 +159,7 @@ body {
 	visibility: unset;
 	pointer-events: unset;
 	opacity: 1;
-	transition: opacity var(--animation-speed-fast);
+	transition: opacity var(--animation-speed-base);
 }
 
 .list-item {

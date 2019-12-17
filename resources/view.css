@@ -144,18 +144,20 @@ body {
 	height: 100%;
 	overflow-y: scroll;
 	visibility: hidden;
+	pointer-events: none;
 	opacity: 0;
 	background-color: var(--color-base);
+	transition: visibility 0s calc(var(--animation-speed-fast) + 0.2s) steps(1, jump-end);
 	will-change: transform;
 }
 
 .load-completed .list-container {
 	opacity: 1;
-	transition: visibility calc(var(--animation-speed-fast) + 0.2s) steps(1, jump-end);
 }
 
 .active.load-completed .list-container {
 	visibility: unset;
+	pointer-events: unset;
 	opacity: 1;
 	transition: opacity var(--animation-speed-fast);
 }
@@ -455,6 +457,7 @@ body {
 	visibility: hidden;
 	opacity: 0;
 	transform: translateY(-30%);
+	will-change: transform;
 }
 
 #pager.interacted {

@@ -223,6 +223,7 @@ class Pager {
 		for(let img_elem of this._root.querySelectorAll(".pager-page-image")) {
 			reset_img_src_if_incomplete(img_elem);
 		}
+		this.hide_toolbox();
 	}
 
 	update(resources) {

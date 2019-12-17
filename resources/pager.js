@@ -171,6 +171,7 @@ class Pager {
 		let name_elem = elem.querySelector(".pager-page-name");
 		let size_elem = elem.querySelector(".pager-page-size");
 		let download_link_elem = elem.querySelector(".pager-page-download-link");
+		let tagger_elem = elem.querySelector(".tagger");
 
 		if(visible) {
 			elem.classList.add("visible");
@@ -185,6 +186,7 @@ class Pager {
 			name_elem.textContent = "";
 			size_elem.textContent = "";
 			download_link_elem.href = "";
+			tagger_elem.dataset.path = "";
 
 			reset_img_src_if_incomplete(img_elem);
 
@@ -197,6 +199,7 @@ class Pager {
 		name_elem.textContent = res.name;
 		size_elem.textContent = get_friendly_size_text(res.size);
 		download_link_elem.href = res.file_url;
+		tagger_elem.dataset.path = res.path;
 
 		img_elem.dataset.src = res.file_url;
 		if(img_delayed === true) {
@@ -336,6 +339,7 @@ class Pager {
 			resources := array({
 				name: string,
 				file_url: string,
+				path: string,
 			})
 		*/
 

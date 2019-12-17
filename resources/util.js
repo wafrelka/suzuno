@@ -20,4 +20,44 @@ function get_friendly_size_text(size) {
 	}
 }
 
-export { fetch_json, get_friendly_size_text }
+function splitN(text, separator, limit) {
+	let it = 0;
+	let comps = [];
+	while(it < text.length && comps.length + 1 < limit) {
+		let n = text.indexOf(separator, it);
+		if(n === -1) {
+			break;
+		}
+		comps.push(text.slice(it, n));
+		it = n + 1;
+	}
+	if((it < text.length || text[text.length - 1] === separator) && comps.length < limit) {
+		comps.push(text.slice(it));
+	}
+	return comps;
+}
+
+function assert_eq(expected, actual) {
+	let x = "[" + expected.map((v) => `"${v}"`).join(",") + "]";
+	let y = "[" + actual.map((v) => `"${v}"`).join(",") + "]";
+	if(x !== y) {
+		throw `expected: ${x}, actual: ${y}`;
+	}
+}
+
+function test_splitN(text, n, expected) {
+	let result = splitN(text, ":", n);
+	assert_eq(expected, result);
+}
+
+test_splitN("aaa:bbb:ccc:ddd", 1, ["aaa:bbb:ccc:ddd"]);
+test_splitN("aaa:bbb:ccc:ddd", 2, ["aaa", "bbb:ccc:ddd"]);
+test_splitN("aaa:bbb:ccc:ddd", 3, ["aaa", "bbb", "ccc:ddd"]);
+test_splitN("aaa:bbb:ccc:ddd", 4, ["aaa", "bbb", "ccc", "ddd"]);
+test_splitN("aaa:bbb:ccc:", 3, ["aaa", "bbb", "ccc:"]);
+test_splitN("aaa:bbb:ccc:", 4, ["aaa", "bbb", "ccc", ""]);
+test_splitN(":::", 5, ["", "", "", ""]);
+test_splitN(":::a", 5, ["", "", "", "a"]);
+test_splitN("a:::", 5, ["a", "", "", ""]);
+
+export { fetch_json, get_friendly_size_text, splitN }

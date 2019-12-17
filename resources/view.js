@@ -1,7 +1,9 @@
 import { List } from "./list.js";
 import { Navi } from "./navi.js";
 import { Pager } from "./pager.js";
+import { Tagger } from "./tagger.js";
 import { Controller } from "./controller.js";
+import { BookmarkList } from "./bookmark.js";
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -15,7 +17,12 @@ document.addEventListener("DOMContentLoaded", () => {
 	let pager_elem = document.getElementById("pager");
 	let pager = new Pager(pager_elem, 3);
 
-	let ctrler = new Controller(list, navi, pager);
+	let bookmark_list = new BookmarkList(window.localStorage);
+	let tagger_elems = document.querySelectorAll(".tagger");
+	let dialog_box_elem = document.getElementById("tagger-dialog-box");
+	let tagger = new Tagger(tagger_elems, dialog_box_elem, bookmark_list);
+
+	let ctrler = new Controller(list, navi, pager, tagger);
 	ctrler.on_push_state = (url, extra, replacing) => {
 		if(replacing === true) {
 			window.history.replaceState(extra, "", url);

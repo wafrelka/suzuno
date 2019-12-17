@@ -110,6 +110,10 @@ class Navi {
 	update_filter_text(text) {
 		this._menu.querySelector(".menu-filter-input").value = text;
 	}
+
+	update_tag_list_path(path) {
+		this._menu.querySelector(".tagger").dataset.path = path;
+	}
 }
 
 export { Navi }

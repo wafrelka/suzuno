@@ -385,10 +385,6 @@ body {
 	margin-top: 0.5rem;
 }
 
-.menu-filter {
-	flex-grow: 1;
-}
-
 .menu-sort-keys {
 	display: flex;
 }
@@ -429,6 +425,7 @@ body {
 
 .menu-section.menu-setting {
 	width: 100%;
+	margin-top: auto;
 }
 
 .menu-setting-link {
@@ -441,6 +438,15 @@ body {
 	font-size: 0.7rem;
 	background-color: var(--color-key);
 	color: var(--color-key-text);
+}
+
+.menu-tags .tagger i {
+	font-size: 1.3rem;
+}
+
+.menu-tags .tagger-item + .tagger-item,
+.menu-tags .tagger-dialog-button {
+	margin-left: 0.2rem;
 }
 
 /* pager */
@@ -612,4 +618,66 @@ body {
 .pager-page-rot-button i {
 	font-size: 1.6rem;
 	line-height: 1;
+}
+
+.pager-page-toolbox-bottom .tagger {
+	margin-left: auto;
+}
+
+.pager-page-toolbox-bottom .tagger i {
+	font-size: 1.8rem;
+}
+
+.pager-page-toolbox-bottom .tagger-item + .tagger-item,
+.pager-page-toolbox-bottom .tagger-dialog-button {
+	margin-left: 0.3rem;
+}
+
+/* tagger */
+
+.tagger-item i {
+	font-family: 'Material Icons';
+}
+
+.tagger-item {
+	opacity: 0.2;
+	transition: opacity var(--animation-speed-base);
+}
+
+.tagger-item.tagged {
+	opacity: 1;
+}
+
+#tagger-dialog-box {
+	position: fixed;
+	width: 100%;
+	height: 100%;
+	visibility: hidden;
+	opacity: 0;
+	background-color: #202020a0;
+}
+
+#tagger-dialog-box.interacted {
+	transition: opacity var(--animation-speed-base), visibility var(--animation-speed-base);
+}
+
+#tagger-dialog-box.active {
+	visibility: unset;
+	opacity: 1;
+}
+
+.tagger-content {
+	position: absolute;
+	top: calc(50% - 10rem);
+	left: calc(50% - 10rem);
+	width: 20rem;
+	height: 20rem;
+	background-color: var(--color-base-dark-transparent);
+	color: var(--color-base-text);
+}
+
+.dialog-path {
+	width: calc(100% - 1.6rem);
+	padding: 0.8rem;
+	font-size: 1rem;
 }

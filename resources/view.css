@@ -155,7 +155,7 @@ body {
 }
 
 .active.load-completed .list-container {
-	visibility: visible;
+	visibility: unset;
 	opacity: 1;
 	transition: opacity var(--animation-speed-fast);
 }
@@ -327,7 +327,7 @@ body {
 }
 
 #menu.expanded {
-	visibility: visible;
+	visibility: unset;
 	opacity: 1;
 }
 
@@ -462,10 +462,10 @@ body {
 }
 
 #pager.active {
-	visibility: initial;
+	visibility: unset;
 	opacity: 1;
 	transform: translateY(0);
-	pointer-events: initial;
+	pointer-events: unset;
 }
 
 .pager-container {

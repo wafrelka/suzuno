@@ -60,6 +60,7 @@ button, button i {
 html {
 	font-size: 16px;
 	line-height: 1;
+	font-family: sans-serif;
 }
 
 @media (min-width: 1200px) {

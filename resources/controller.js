@@ -30,6 +30,7 @@ function append_links(base_url, resources) {
 		} else if(res.type == "file") {
 			formatted.push({
 				link: make_page_url(base_url, file_count),
+				path: get_resource_title(base_url) + "/" + res.name,
 				...res
 			});
 			file_count += 1;
@@ -72,11 +73,12 @@ function apply_or_null(f, x) {
 
 class Controller {
 
-	constructor(list, navi, pager) {
+	constructor(list, navi, pager, tagger) {
 
 		this._list = list;
 		this._navi = navi;
 		this._pager = pager;
+		this._tagger = tagger;
 
 		this._on_push_state = () => {};
 
@@ -270,6 +272,9 @@ class Controller {
 		}
 		this._navi.update_filter_text(cur_filter || "");
 		this._pager.update_back_link(make_list_url(cur.location));
+
+		this._navi.update_tag_list_path(title);
+		this._tagger.redraw();
 	}
 
 	refresh_with(location, replacing = false) {

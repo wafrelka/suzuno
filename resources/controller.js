@@ -197,6 +197,7 @@ class Controller {
 				let log = this._history.get(cur_list_url.href);
 				if(log !== undefined) {
 					this._list.restore_scroll_state(log.scroll);
+					this._history.delete(cur_list_url.href);
 				}
 				this._list.scroll_to(idx);
 			}

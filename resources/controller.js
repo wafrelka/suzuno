@@ -87,6 +87,7 @@ class Controller {
 			processed: null,
 			highlighted: null,
 		};
+		this._in_flight = null;
 
 		this._list.on_file_selected = (url) => {
 			this.refresh_with(url);
@@ -118,14 +119,26 @@ class Controller {
 		this._on_push_state = fn;
 	}
 
-	async _request_resources_update(location) {
+	async _issue_resource_fetching(location, controller) {
+
 		try {
-			let resp = await fetch_resources(location);
-			this._update(undefined, resp.resources);
+			let resp = await fetch_resources(location, controller);
+			this._update(undefined, { data: resp.resources, location: location });
 		} catch(err) {
+			if(err instanceof DOMException && err.name === "AbortError") {
+				return;
+			}
 			this._list.set_error_message(`failed to load: ${err}`);
 			console.log(err);
 		}
+	}
+
+	_request_resources_update(location) {
+		if(this._in_flight !== null) {
+			this._in_flight.abort();
+		}
+		this._in_flight = new AbortController();
+		this._issue_resource_fetching(location, this._in_flight);
 	}
 
 	_update(location_updated = undefined, resources_updated = undefined) {
@@ -138,7 +151,12 @@ class Controller {
 			cur.location = new URL(location_updated);
 		}
 		if(resources_updated !== undefined) {
-			cur.resources = resources_updated;
+			let cur_list_url = make_canonical_list_url(cur.location);
+			let res_list_url = make_canonical_list_url(resources_updated.location);
+			if(!same_url(cur_list_url, res_list_url)) {
+				return;
+			}
+			cur.resources = resources_updated.data;
 			cur.processed = null;
 		}
 

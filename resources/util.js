@@ -1,5 +1,9 @@
-async function fetch_json(url) {
-	let resp = await fetch(url);
+async function fetch_json(url, controller = undefined) {
+	let opt = {};
+	if(controller !== undefined) {
+		opt.signal = controller.signal;
+	}
+	let resp = await fetch(url, opt);
 	if(!resp.ok) {
 		throw resp.statusText;
 	}

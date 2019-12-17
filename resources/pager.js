@@ -165,12 +165,18 @@ class Pager {
 		elem.style.transform = `rotate(${deg}deg)`;
 	}
 
-	_redraw_single_page(elem, page_num, img_delayed, rot_animated) {
+	_redraw_single_page(elem, page_num, img_delayed, visible, rot_animated) {
 
 		let img_elem = elem.querySelector(".pager-page-image");
 		let name_elem = elem.querySelector(".pager-page-name");
 		let size_elem = elem.querySelector(".pager-page-size");
 		let download_link_elem = elem.querySelector(".pager-page-download-link");
+
+		if(visible) {
+			elem.classList.add("visible");
+		} else {
+			elem.classList.remove("visible");
+		}
 
 		if(this._resources === null || page_num === null ||
 			page_num < 0 || page_num >= this._resources.length) {
@@ -194,7 +200,7 @@ class Pager {
 
 		img_elem.dataset.src = res.file_url;
 		if(img_delayed === true) {
-			reset_img_src_if_incomplete(img_elem);
+			img_elem.src = "";
 		} else {
 			replace_img_src_if_needed(img_elem);
 		}
@@ -210,7 +216,7 @@ class Pager {
 		let pages = this._root.querySelectorAll(".pager-page");
 		let cur_page = pages[this._extra_pages];
 
-		let cur_ok = this._redraw_single_page(cur_page, this._current_num, false, !initial);
+		let cur_ok = this._redraw_single_page(cur_page, this._current_num, false, true, !initial);
 
 		for(let d = -this._extra_pages; d <= this._extra_pages; d += 1) {
 			if(d === 0) {
@@ -218,7 +224,8 @@ class Pager {
 			}
 			let v = pages[d + this._extra_pages];
 			let p = (this._current_num !== null ? this._current_num + d : null);
-			this._redraw_single_page(v, p, !cur_ok && initial, !initial);
+			let near = !(d > 2 || d < -2);
+			this._redraw_single_page(v, p, !cur_ok && initial, near, !initial);
 		}
 	}
 

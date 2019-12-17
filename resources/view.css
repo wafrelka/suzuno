@@ -407,7 +407,7 @@ body {
 }
 
 #pager.interacted .pager-page .toolbox {
-	transition: transform var(--animation-speed-base);
+	transition: transform var(--animation-speed-base) ease-in-out;
 }
 
 .pager-page .toolbox.activated {

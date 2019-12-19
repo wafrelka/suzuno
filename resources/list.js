@@ -95,7 +95,7 @@ class List {
 		for(let highlighted of container.querySelectorAll(".highlighted")) {
 			highlighted.classList.remove("highlighted");
 		}
-		container.scrollTo(0, 0);
+		request_before_redraw(() => { container.scrollTo(0, 0); });
 	}
 
 	scroll_to(index) {

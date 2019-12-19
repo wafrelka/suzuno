@@ -180,26 +180,24 @@ class List {
 		for(let i = container.children.length - 1; i < length; i += 1) {
 			let v = template.cloneNode(true);
 			v.querySelector(".list-item-link").addEventListener("click", click_fn);
+			v.classList.remove("template");
 			container.appendChild(v);
 		}
+		let children = Array.from(container.children);
 
 		for(let i = 0; i < length; i += 1) {
 
 			let item = resources[i];
-			let v = container.children[i + 1]; // children[0] is the template
+			let v = children[i + 1]; // children[0] is the template
 
 			this._observer.observe(v);
-
-			for(let c of ["dir-item", "file-item", "empty-item", "template", "highlighted"]) {
-				v.classList.remove(c);
-			}
 
 			let thumbnail_elem = v.querySelector(".list-item-thumbnail");
 			let name_elem = v.querySelector(".list-item-name");
 			let link_elem = v.querySelector(".list-item-link");
 
 			thumbnail_elem.dataset.src = "";
-			thumbnail_elem.src = "";
+			reset_img_src_if_incomplete(thumbnail_elem);
 			name_elem.textContent = item.name;
 			link_elem.dataset.type = item.type;
 			link_elem.href = "";
@@ -211,13 +209,19 @@ class List {
 				thumbnail_elem.dataset.src = item.thumbnail_url;
 			}
 
+			let type_class = "empty-item";
 			if(item.type == "file") {
-				v.classList.add("file-item");
+				type_class = "file-item";
 			} else if(item.type == "directory") {
-				v.classList.add("dir-item");
-			} else {
-				v.classList.add("empty-item");
+				type_class = "dir-item";
 			}
+
+			for(let c of ["dir-item", "file-item", "empty-item", "highlighted"]) {
+				if(c !== type_class) {
+					v.classList.remove(c);
+				}
+			}
+			v.classList.add(type_class);
 			v.classList.add("hidden-item");
 		}
 	}

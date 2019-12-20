@@ -39,8 +39,10 @@ class AnimationDebouncer {
 	}
 }
 
-function request_before_redraw(fn) {
-	window.requestAnimationFrame(fn);
+function request_after_redraw(fn) {
+	window.requestAnimationFrame(() => {
+		window.requestAnimationFrame(fn);
+	});
 }
 
-export { AnimationDebouncer, request_before_redraw }
+export { AnimationDebouncer, request_after_redraw }

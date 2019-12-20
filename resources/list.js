@@ -1,5 +1,5 @@
 import { replace_img_src_if_needed, reset_img_src_if_incomplete } from "./imgsrc.js";
-import { request_before_redraw } from "./animation.js";
+import { request_after_redraw } from "./animation.js";
 
 class List {
 
@@ -95,7 +95,7 @@ class List {
 		for(let highlighted of container.querySelectorAll(".highlighted")) {
 			highlighted.classList.remove("highlighted");
 		}
-		request_before_redraw(() => { container.scrollTo(0, 0); });
+		request_after_redraw(() => { container.scrollTo(0, 0); });
 	}
 
 	scroll_to(index) {
@@ -110,9 +110,8 @@ class List {
 		for(let highlighted of container.querySelectorAll(".highlighted")) {
 			highlighted.classList.remove("highlighted");
 		}
-		request_before_redraw(() => item.classList.add("highlighted"));
 
-		request_before_redraw(() => {
+		request_after_redraw(() => {
 
 			let item_height = item.offsetHeight;
 			let item_top = item.offsetTop;
@@ -132,6 +131,8 @@ class List {
 				diff = +(bottom_diff + item_height * 0.2);
 			}
 			container.scrollBy(0, diff);
+
+			item.classList.add("highlighted");
 		});
 	}
 

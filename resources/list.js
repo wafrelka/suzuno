@@ -6,7 +6,7 @@ class List {
 	constructor(root) {
 
 		this._root = root;
-		this._active = true;
+		this._active = false;
 		this._on_file_selected = () => {};
 		this._on_directory_selected = () => {};
 
@@ -56,6 +56,9 @@ class List {
 	}
 
 	activate_thumbnails() {
+		if(this._active) {
+			return;
+		}
 		this._active = true;
 		this._root.classList.add("active");
 		let visible_elems = this._root.querySelectorAll(".list-item-thumbnail[data-state=\"visible\"]");
@@ -65,6 +68,9 @@ class List {
 	}
 
 	deactivate_partial_thumbnails() {
+		if(!this._active) {
+			return;
+		}
 		this._active = false;
 		this._root.classList.remove("active");
 		let visible_elems = this._root.querySelectorAll(".list-item-thumbnail[data-state=\"visible\"]");

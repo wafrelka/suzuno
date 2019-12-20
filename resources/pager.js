@@ -309,6 +309,9 @@ class Pager {
 	}
 
 	activate() {
+		if(this._active) {
+			return;
+		}
 		this._active = true;
 		this._root.classList.add("active");
 		this._root.classList.add("interacted");
@@ -316,6 +319,9 @@ class Pager {
 	}
 
 	deactivate() {
+		if(!this._active) {
+			return;
+		}
 		this._active = false;
 		this._root.classList.remove("active");
 		this._current_num = null;

@@ -153,12 +153,6 @@ body {
 	opacity: 1;
 }
 
-#list:not(.active) .list-container {
-	visibility: hidden;
-	pointer-events: none;
-	transition: visibility 0s calc(var(--animation-speed-fast) + 0.1s);
-}
-
 .active.load-completed .list-container {
 	opacity: 1;
 	transition: opacity var(--animation-speed-base);

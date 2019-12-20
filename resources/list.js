@@ -18,6 +18,8 @@ class List {
 		let observer_callback = this._update_img_visibility.bind(this);
 		this._observer = new IntersectionObserver(observer_callback, observer_options);
 
+		this._last_highlighted = null;
+
 		this.reset();
 	}
 
@@ -92,8 +94,9 @@ class List {
 
 		let container = this._root.querySelector(".list-container");
 
-		for(let highlighted of container.querySelectorAll(".highlighted")) {
-			highlighted.classList.remove("highlighted");
+		if(this._last_highlighted !== null) {
+			this._last_highlighted.classList.remove("highlighted");
+			this._last_highlighted = null;
 		}
 		request_after_redraw(() => { container.scrollTo(0, 0); });
 	}
@@ -107,8 +110,9 @@ class List {
 		}
 		let item = items[index + 1];
 
-		for(let highlighted of container.querySelectorAll(".highlighted")) {
-			highlighted.classList.remove("highlighted");
+		if(this._last_highlighted !== null) {
+			this._last_highlighted.classList.remove("highlighted");
+			this._last_highlighted = null;
 		}
 
 		request_after_redraw(() => {
@@ -132,7 +136,10 @@ class List {
 			}
 			container.scrollBy(0, diff);
 
-			item.classList.add("highlighted");
+			if(this._last_highlighted === null) {
+				this._last_highlighted = item;
+				item.classList.add("highlighted");
+			}
 		});
 	}
 
@@ -217,7 +224,7 @@ class List {
 				type_class = "dir-item";
 			}
 
-			for(let c of ["dir-item", "file-item", "empty-item", "highlighted"]) {
+			for(let c of ["dir-item", "file-item", "empty-item"]) {
 				if(c !== type_class) {
 					v.classList.remove(c);
 				}

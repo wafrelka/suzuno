@@ -149,6 +149,7 @@ body {
 	background-color: var(--color-base);
 	transition: visibility 0s calc(var(--animation-speed-fast) + 0.2s) steps(1, jump-end);
 	will-change: transform;
+	contain: strict;
 }
 
 .load-completed .list-container {
@@ -166,6 +167,7 @@ body {
 	position: relative; /* for .list-item-inner */
 	height: 0;
 	padding-bottom: 100%;
+	contain: strict;
 }
 
 .list-item-link {

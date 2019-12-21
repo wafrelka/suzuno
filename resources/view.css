@@ -163,6 +163,7 @@ body {
 	position: relative; /* for .list-item-inner */
 	height: 0;
 	padding-bottom: 100%;
+	overflow: clip;
 	contain: strict;
 }
 

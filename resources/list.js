@@ -104,7 +104,7 @@ class List {
 			this._last_highlighted.classList.remove("highlighted");
 			this._last_highlighted = null;
 		}
-		request_after_redraw(() => { container.scrollTo(0, 0); });
+		container.scrollTo(0, 0);
 	}
 
 	scroll_to(index) {

@@ -58,23 +58,26 @@ func is_image_ext(name string) bool {
 	return false
 }
 
-func get_resource_info(path string, file_info os.FileInfo) (ResourceInfo, bool) {
+func (s *SuzunoServer) get_resource_info(slash_path string, file_info os.FileInfo) (ResourceInfo, bool) {
 
 	name := file_info.Name()
 
 	if file_info.Mode().IsRegular() && is_image_ext(name) {
+		url := get_url(slash_path)
 		return ResourceInfo{
 			Type: "file",
 			Name: name,
-			Path: path,
+			Path: slash_path,
 			ModifiedAt: file_info.ModTime().Unix(),
 			Size: file_info.Size(),
+			ThumbnailUrl: s.thumbnail_url_prefix + url,
+			FileUrl: s.file_url_prefix + url,
 		}, true
 	} else if file_info.IsDir() {
 		return ResourceInfo{
 			Type: "directory",
 			Name: name,
-			Path: path,
+			Path: slash_path,
 			ModifiedAt: file_info.ModTime().Unix(),
 			Size: 0,
 		}, true
@@ -91,9 +94,9 @@ func is_closed(req *http.Request) bool {
 	}
 }
 
-func open_file_or_close(path, etag_prefix string, w http.ResponseWriter, req *http.Request) *os.File {
+func open_file_or_abort(native_path, etag_prefix string, w http.ResponseWriter, req *http.Request) *os.File {
 
-	stat, err := os.Stat(path)
+	stat, err := os.Stat(native_path)
 	if err != nil && !os.IsNotExist(err) {
 		http.Error(w, "stat failed", http.StatusInternalServerError)
 		return nil
@@ -105,7 +108,7 @@ func open_file_or_close(path, etag_prefix string, w http.ResponseWriter, req *ht
 		return nil
 	}
 
-	file, err := os.Open(path)
+	file, err := os.Open(native_path)
 	if err != nil {
 		http.Error(w, "IO failed", http.StatusInternalServerError)
 		return nil
@@ -135,21 +138,21 @@ func open_file_or_close(path, etag_prefix string, w http.ResponseWriter, req *ht
 
 func (s *SuzunoServer) serve_file(w http.ResponseWriter, req *http.Request) {
 
-	file_path := get_native_path(s.root, req.URL.Path)
-	file := open_file_or_close(file_path, "file:v1:", w, req)
+	native_path := get_native_path(s.root, req.URL.Path)
+	file := open_file_or_abort(native_path, "file:v1:", w, req)
 
 	if file == nil {
 		return
 	}
 	defer file.Close()
 
-	http.ServeContent(w, req, file_path, time.Time{}, file)
+	http.ServeContent(w, req, native_path, time.Time{}, file)
 }
 
 func (s *SuzunoServer) serve_thumbnail(w http.ResponseWriter, req *http.Request) {
 
-	file_path := get_native_path(s.root, req.URL.Path)
-	file := open_file_or_close(file_path, "thumbnail:v1:", w, req)
+	native_path := get_native_path(s.root, req.URL.Path)
+	file := open_file_or_abort(native_path, "thumbnail:v1:", w, req)
 
 	if file == nil {
 		return
@@ -188,9 +191,10 @@ func (s *SuzunoServer) serve_thumbnail(w http.ResponseWriter, req *http.Request)
 }
 
 func (s *SuzunoServer) serve_meta_directory(w http.ResponseWriter, req *http.Request) {
-	file_path := get_native_path(s.root, req.URL.Path)
 
-	stat, err := os.Stat(file_path)
+	native_path := get_native_path(s.root, req.URL.Path)
+
+	stat, err := os.Stat(native_path)
 	if err != nil && !os.IsNotExist(err) {
 		http.Error(w, "stat failed", http.StatusInternalServerError)
 		return
@@ -202,7 +206,7 @@ func (s *SuzunoServer) serve_meta_directory(w http.ResponseWriter, req *http.Req
 		return
 	}
 
-	dir, err := os.Open(file_path)
+	dir, err := os.Open(native_path)
 	if err != nil {
 		http.Error(w, "io failed", http.StatusInternalServerError)
 		return
@@ -233,19 +237,12 @@ func (s *SuzunoServer) serve_meta_directory(w http.ResponseWriter, req *http.Req
 		}
 
 		for _, entry := range entries {
-			full_slash_path := path.Join(req.URL.Path, entry.Name())
-			full_url := get_url(full_slash_path)
-			res, ok := get_resource_info(full_slash_path, entry)
+			entry_slash_path := path.Join(req.URL.Path, entry.Name())
+			res, ok := s.get_resource_info(entry_slash_path, entry)
 			if ok {
-				if res.Type == "file" {
-					res.ThumbnailUrl = s.thumbnail_url_prefix + full_url
-					res.FileUrl = s.file_url_prefix + full_url
-				}
 				resp.Resources = append(resp.Resources, res)
 			}
 		}
-
-
 	}
 
 	bin, err := json.Marshal(&resp)

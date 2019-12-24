@@ -7,10 +7,8 @@ import (
 	"image/jpeg"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -18,72 +16,6 @@ import (
 const (
 	READDIR_BATCH_SIZE = 200
 )
-
-type ResourceInfo struct {
-	Type string `json:"type"`
-	Name string `json:"name"`
-	Path string `json:"path"`
-	ModifiedAt int64 `json:"modified_at"`
-	Size int64 `json:"size"`
-	ThumbnailUrl string `json:"thumbnail_url,omitempty"`
-	FileUrl string `json:"file_url,omitempty"`
-}
-
-func get_native_path(root, slash_path string) string {
-	slash_path = path.Clean(slash_path)
-	rel_path := filepath.FromSlash(strings.TrimPrefix(slash_path, "/"))
-	file_path := filepath.Join(root, rel_path)
-	return file_path
-}
-
-func get_url(slash_path string) string {
-
-	slash_comps := strings.Split(slash_path, "/")
-	safe_slash_comps := []string{}
-	for _, c := range slash_comps {
-		safe_slash_comps = append(safe_slash_comps, url.PathEscape(c))
-	}
-
-	return strings.Join(safe_slash_comps, "/")
-}
-
-func is_image_ext(name string) bool {
-	exts := []string{".png", ".jpg", ".jpeg", ".bmp", ".gif"}
-	target := strings.ToLower(filepath.Ext(name))
-	for _, e := range exts {
-		if e == target {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *SuzunoServer) get_resource_info(slash_path string, file_info os.FileInfo) (ResourceInfo, bool) {
-
-	name := file_info.Name()
-
-	if file_info.Mode().IsRegular() && is_image_ext(name) {
-		url := get_url(slash_path)
-		return ResourceInfo{
-			Type: "file",
-			Name: name,
-			Path: slash_path,
-			ModifiedAt: file_info.ModTime().Unix(),
-			Size: file_info.Size(),
-			ThumbnailUrl: s.thumbnail_url_prefix + url,
-			FileUrl: s.file_url_prefix + url,
-		}, true
-	} else if file_info.IsDir() {
-		return ResourceInfo{
-			Type: "directory",
-			Name: name,
-			Path: slash_path,
-			ModifiedAt: file_info.ModTime().Unix(),
-			Size: 0,
-		}, true
-	}
-	return ResourceInfo{}, false
-}
 
 func is_closed(req *http.Request) bool {
 	select {

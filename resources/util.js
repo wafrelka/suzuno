@@ -10,6 +10,22 @@ async function fetch_json(url, controller = undefined) {
 	return resp.json();
 }
 
+async function fetch_json_by_post(url, param, controller = undefined) {
+	let opt = {
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(param),
+		method: "POST",
+	};
+	if(controller !== undefined) {
+		opt.signal = controller.signal;
+	}
+	let resp = await fetch(url, opt);
+	if(!resp.ok) {
+		throw resp.statusText;
+	}
+	return resp.json();
+}
+
 function get_friendly_size_text(size) {
 	let units = ["", "K", "M", "G", "T"];
 	for(let i = 0, base = 1; i < units.length; i += 1, base = base * 1000) {
@@ -60,4 +76,4 @@ test_splitN(":::", 5, ["", "", "", ""]);
 test_splitN(":::a", 5, ["", "", "", "a"]);
 test_splitN("a:::", 5, ["a", "", "", ""]);
 
-export { fetch_json, get_friendly_size_text, splitN }
+export { fetch_json, fetch_json_by_post, get_friendly_size_text, splitN }

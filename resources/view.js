@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	let dialog_box_elem = document.getElementById("tagger-dialog-box");
 	let tagger = new Tagger(tagger_elems, dialog_box_elem, bookmark_list);
 
-	let ctrler = new Controller(list, navi, pager, tagger);
+	let ctrler = new Controller(list, navi, pager, tagger, bookmark_list);
 	ctrler.on_push_state = (url, extra, replacing) => {
 		if(replacing === true) {
 			window.history.replaceState(extra, "", url);

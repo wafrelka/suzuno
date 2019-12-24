@@ -34,6 +34,8 @@ class TaggerComponent {
 					return;
 				}
 
+				console.log("tagging", path, tag, !target.classList.contains("tagged"));
+
 				if(target.classList.contains("tagged")) {
 					this._bookmark_list.unset_tag(path, tag);
 					target.classList.remove("tagged");

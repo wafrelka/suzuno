@@ -17,6 +17,10 @@ const (
 	READDIR_BATCH_SIZE = 200
 )
 
+type BatchRequest struct {
+	Targets []string `json:"targets"`
+}
+
 func is_closed(req *http.Request) bool {
 	select {
 	case <-req.Context().Done():
@@ -189,7 +193,7 @@ func (s *SuzunoServer) serve_meta_directory(w http.ResponseWriter, req *http.Req
 
 func (s *SuzunoServer) serve_meta_batch(w http.ResponseWriter, req *http.Request) {
 
-	if req.method != "POST" {
+	if req.Method != "POST" {
 		http.Error(w, "method mismatch", http.StatusBadRequest)
 		return
 	}
@@ -215,8 +219,7 @@ func (s *SuzunoServer) serve_meta_batch(w http.ResponseWriter, req *http.Request
 
 	for _, target := range batch_req.Targets {
 
-		name := path.Base(target)
-		native_path = get_native_path(s.root, target)
+		native_path := get_native_path(s.root, target)
 		entry, err := os.Stat(native_path)
 
 		if err != nil && !os.IsNotExist(err) {
@@ -225,15 +228,14 @@ func (s *SuzunoServer) serve_meta_batch(w http.ResponseWriter, req *http.Request
 		}
 
 		if os.IsNotExist(err) {
-			e := ResourceInfo {
-				Type: "empty",
-				Name: name,
-				Path: slash_path,
-			}
-			resp.Resources = append(resp.Resources, e)
+			res := make_empty_resource_info(target, path.Base(target))
+			resp.Resources = append(resp.Resources, res)
 		} else {
-			e := get_resource_info(target, entry)
-			resp.Resources = append(resp.Resources, e)
+			res, ok := s.get_resource_info(target, entry)
+			if !ok {
+				res = make_empty_resource_info(target, path.Base(target))
+			}
+			resp.Resources = append(resp.Resources, res)
 		}
 
 		batch_read_count += 1
@@ -253,4 +255,4 @@ func (s *SuzunoServer) serve_meta_batch(w http.ResponseWriter, req *http.Request
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bin)
-})
+}

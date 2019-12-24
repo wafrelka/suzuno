@@ -14,6 +14,16 @@ type ResourceInfo struct {
 	FileUrl string `json:"file_url,omitempty"`
 }
 
+func make_empty_resource_info(slash_path, name string) ResourceInfo {
+	return ResourceInfo{
+		Type: "empty",
+		Name: name,
+		Path: slash_path,
+		ModifiedAt: 0,
+		Size: 0,
+	}
+}
+
 func (s *SuzunoServer) get_resource_info(slash_path string, file_info os.FileInfo) (ResourceInfo, bool) {
 
 	name := file_info.Name()

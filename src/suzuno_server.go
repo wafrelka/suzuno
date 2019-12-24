@@ -78,8 +78,10 @@ func NewSuzunoServer(root string) *SuzunoServer {
 	assign_sub_handler(s.mux, "/file/", http.HandlerFunc(s.serve_file))
 	assign_sub_handler(s.mux, "/thumbnail/", http.HandlerFunc(s.serve_thumbnail))
 	assign_sub_handler(s.mux, "/meta/directory/", http.HandlerFunc(s.serve_meta_directory))
+	assign_single_point(s.mux, "/meta/batch", http.HandlerFunc(s.serve_meta_batch))
 
 	s.mux.Handle("/view/", PkgerSingleFileHandler("/resources/view.html"))
+	s.mux.Handle("/bookmark/", PkgerSingleFileHandler("/resources/view.html"))
 	assign_single_point(s.mux, "/", http.RedirectHandler("/view/", http.StatusFound))
 
 	return &s

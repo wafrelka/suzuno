@@ -13,7 +13,7 @@ import {
 	is_parent_list,
 	same_url,
 } from "./path.js";
-import { fetch_resources, fetch_resource_path } from "./fetch.js";
+import { fetch_resources, fetch_resource_path } from "./resources.js";
 
 function update_page_links(base_url, resources) {
 
@@ -60,12 +60,13 @@ function apply_or_null(f, x) {
 
 class Controller {
 
-	constructor(list, navi, pager, tagger) {
+	constructor(list, navi, pager, tagger, bookmark_list) {
 
 		this._list = list;
 		this._navi = navi;
 		this._pager = pager;
 		this._tagger = tagger;
+		this._bookmark_list = bookmark_list;
 
 		this._on_push_state = () => {};
 
@@ -111,7 +112,7 @@ class Controller {
 	async _issue_resource_fetching(location, controller) {
 
 		try {
-			let resp = await fetch_resources(location, controller);
+			let resp = await fetch_resources(location, this._bookmark_list, controller);
 			this._update(undefined, { data: resp.resources, location: location });
 		} catch(err) {
 			if(err instanceof DOMException && err.name === "AbortError") {
@@ -243,7 +244,7 @@ class Controller {
 		}
 
 		let suffix = suffix_items.join(", ");
-		let title = fetch_resource_path(cur.location);
+		let title = fetch_resource_path(cur.location, this._bookmark_list);
 		this._navi.update_title("", title, suffix);
 
 		let parent = make_parent_url(cur.location);

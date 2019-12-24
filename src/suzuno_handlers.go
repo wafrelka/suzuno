@@ -186,3 +186,71 @@ func (s *SuzunoServer) serve_meta_directory(w http.ResponseWriter, req *http.Req
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(bin)
 }
+
+func (s *SuzunoServer) serve_meta_batch(w http.ResponseWriter, req *http.Request) {
+
+	if req.method != "POST" {
+		http.Error(w, "method mismatch", http.StatusBadRequest)
+		return
+	}
+
+	if req.Header.Get("Content-Type") != "application/json" {
+		http.Error(w, "Content-Type mismatch", http.StatusBadRequest)
+		return
+	}
+
+	var batch_req BatchRequest
+	if err := json.NewDecoder(req.Body).Decode(&batch_req); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+
+	resp := struct {
+		Resources []ResourceInfo `json:"resources"`
+	}{
+		Resources: []ResourceInfo{},
+	}
+
+	batch_read_count := 0
+
+	for _, target := range batch_req.Targets {
+
+		name := path.Base(target)
+		native_path = get_native_path(s.root, target)
+		entry, err := os.Stat(native_path)
+
+		if err != nil && !os.IsNotExist(err) {
+			http.Error(w, "stat failed", http.StatusInternalServerError)
+			return
+		}
+
+		if os.IsNotExist(err) {
+			e := ResourceInfo {
+				Type: "empty",
+				Name: name,
+				Path: slash_path,
+			}
+			resp.Resources = append(resp.Resources, e)
+		} else {
+			e := get_resource_info(target, entry)
+			resp.Resources = append(resp.Resources, e)
+		}
+
+		batch_read_count += 1
+		if batch_read_count >= READDIR_BATCH_SIZE {
+			batch_read_count = 0
+			if is_closed(req) {
+				return
+			}
+		}
+	}
+
+	bin, err := json.Marshal(&resp)
+	if err != nil {
+		http.Error(w, "marshaling failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(bin)
+})

@@ -13,33 +13,20 @@ import {
 	is_parent_list,
 	same_url,
 } from "./path.js";
-import { fetch_resources, get_resource_title } from "./fetch.js";
+import { fetch_resources, fetch_resource_path } from "./fetch.js";
 
-function append_links(base_url, resources) {
+function update_page_links(base_url, resources) {
 
-	let formatted = [];
 	let file_count = 0;
 
 	for(let res of resources) {
-
-		if(res.type == "directory") {
-			formatted.push({
-				link: make_directory_url(base_url, res.name),
-				...res
-			});
-		} else if(res.type == "file") {
-			formatted.push({
-				link: make_page_url(base_url, file_count),
-				path: get_resource_title(base_url) + "/" + res.name,
-				...res
-			});
+		if(res.type === "file") {
+			res.link = make_page_url(base_url, file_count);
 			file_count += 1;
-		} else {
-			formatted.push(res);
 		}
 	}
 
-	return formatted;
+	return resources;
 }
 
 function compute_processed_resources(resources, sort_key, filter) {
@@ -183,7 +170,7 @@ class Controller {
 		if(resources_updated !== undefined || (cur.resources !== null && changed)) {
 
 			cur.processed = compute_processed_resources(cur.resources, cur_sort_key, cur_filter);
-			cur.processed = append_links(cur.location, cur.processed);
+			cur.processed = update_page_links(cur.location, cur.processed);
 
 			let files = cur.processed.filter((r) => r.type == "file");
 			this._list.update(cur.processed);
@@ -238,6 +225,13 @@ class Controller {
 
 		let suffix_items = [];
 
+		if(cur_sort_key !== null) {
+			suffix_items.push(`${cur_sort_key.replace("_", ":")}`);
+		}
+		if(cur_filter !== null) {
+			suffix_items.push(`[${cur_filter}]`);
+		}
+
 		if(cur.resources !== null) {
 			let c_all = cur.resources.length;
 			let c_shown = cur.processed.length;
@@ -248,15 +242,8 @@ class Controller {
 			}
 		}
 
-		if(cur_sort_key !== null) {
-			suffix_items.push(`${cur_sort_key.replace("_", ":")}`);
-		}
-		if(cur_filter !== null) {
-			suffix_items.push(`[${cur_filter}]`);
-		}
-
 		let suffix = suffix_items.join(", ");
-		let title = get_resource_title(cur.location);
+		let title = fetch_resource_path(cur.location);
 		this._navi.update_title("", title, suffix);
 
 		let parent = make_parent_url(cur.location);

@@ -1,5 +1,5 @@
 import { replace_img_src_if_needed, reset_img_src_if_incomplete } from "./imgsrc.js";
-import { SinglePointerHandler } from "./pointer.js";
+import { GestureHandler } from "./gesture.js";
 import { AnimationDebouncer } from "./animation.js";
 import { get_friendly_size_text } from "./util.js";
 
@@ -11,7 +11,6 @@ class Pager {
 		this._back_link = "";
 		this._active = false;
 
-		this._pointer_handlers = [];
 		this._extra_pages = extra_pages;
 		this._current_num = null;
 		this._resources = null;
@@ -29,6 +28,34 @@ class Pager {
 			}
 			container.style.transform = param.transform;
 		});
+
+		let gesture_handler = new GestureHandler(this._root.querySelector(".pager-container"));
+
+		gesture_handler.on_moved = (dx, _) => {
+			this._move_to(-dx);
+		};
+		gesture_handler.on_swiped = (dir) => {
+
+			let mov = -dir;
+			let next_num = (this._current_num !== null ? this._current_num + mov : null);
+			let res_len = (this._resources !== null ? this._resources.length : -1);
+			let in_range = (next_num >= 0 && next_num < res_len);
+
+			if(next_num !== this._current_num && in_range) {
+				this._on_page_changed(next_num);
+			} else {
+				this._move_to_base_animated();
+			}
+		};
+		gesture_handler.on_tapped = () => {
+			this._move_to_base_animated();
+			this.toggle_toolbox();
+		};
+		gesture_handler.on_canceled = () => {
+			this._move_to_base_animated();
+		}
+
+		this._gesture_handler = gesture_handler;
 
 		this._on_page_changed = () => {};
 		this._on_back_requested = () => {};
@@ -62,44 +89,6 @@ class Pager {
 			});
 			vi.addEventListener("load", () => { this._redraw_pages(); });
 			vi.addEventListener("error", () => { this._redraw_pages(); });
-
-			let h = new SinglePointerHandler(vi);
-			h.on_pointer_moved = (dx, _) => {
-				this._move_to(-dx);
-			}
-			h.on_pointer_completed = (dx, dy, rxy) => {
-
-				let page = this._root.querySelector(".pager-page");
-				let mov_threshold = page.clientWidth * 0.1;
-				let tap_threshold = Math.min(page.clientWidth, page.clientHeight) * 0.05;
-
-				let mov = 0;
-
-				if(dx < -mov_threshold) {
-					mov = +1;
-				} else if(dx > mov_threshold) {
-					mov = -1;
-				}
-
-				let next_num = (this._current_num !== null ? this._current_num + mov : null);
-				let res_len = (this._resources !== null ? this._resources.length : -1);
-				let in_range = (next_num >= 0 && next_num < res_len);
-
-				if(next_num !== this._current_num && in_range) {
-					this._on_page_changed(next_num);
-				} else {
-					this._move_to_base_animated();
-				}
-
-				if(rxy < tap_threshold) {
-					this.toggle_toolbox();
-				}
-			};
-			h.on_pointer_canceled = () => {
-				this._move_to_base_animated();
-			};
-
-			this._pointer_handlers.push(h);
 
 			container.appendChild(v);
 		}

@@ -34,6 +34,7 @@ function compute_processed_resources(resources, sort_key, filter) {
 	let c = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
 	let name_fn = (a, b) => (c.compare(a.name, b.name));
 	let date_fn = (a, b) => (a.modified_at - b.modified_at);
+	let tag_fn = (a, b) => (c.compare(a.num, b.num));
 	let rev = (f) => ((a, b) => (-f(a, b)));
 
 	let comp_fn = new Map([
@@ -41,6 +42,8 @@ function compute_processed_resources(resources, sort_key, filter) {
 		["name_down", rev(name_fn)],
 		["date_up", date_fn],
 		["date_down", rev(date_fn)],
+		["tag_up", tag_fn],
+		["tag_down", rev(tag_fn)],
 	]).get(sort_key) || name_fn;
 
 	let processed = resources.sort(comp_fn);
@@ -254,7 +257,7 @@ class Controller {
 		}
 		this._navi.update_back_link(parent);
 
-		for(let k of ["name_up", "name_down", "date_up", "date_down"]) {
+		for(let k of ["name_up", "name_down", "date_up", "date_down", "tag_up", "tag_down"]) {
 			let u = make_sorted_url(cur.location, k);
 			this._navi.update_sort_key_link(k, u);
 		}

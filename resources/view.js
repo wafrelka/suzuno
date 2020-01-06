@@ -18,6 +18,12 @@ document.addEventListener("DOMContentLoaded", () => {
 	let pager = new Pager(pager_elem, 3);
 
 	let bookmark_list = new BookmarkList(window.localStorage);
+	if(bookmark_list.tags().length === 0) {
+		for(let i = 0; i < 5; i += 1) {
+			bookmark_list.new_tag(i + 1, true, `tag-${i + 1}`);
+		}
+	}
+
 	let tagger_elems = document.querySelectorAll(".tagger");
 	let dialog_box_elem = document.getElementById("tagger-dialog-box");
 	let tagger = new Tagger(tagger_elems, dialog_box_elem, bookmark_list);

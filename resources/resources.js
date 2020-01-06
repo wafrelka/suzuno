@@ -38,7 +38,21 @@ function insert_num_links(base_url, items, resources) {
 		if(res.type === "directory") {
 			res.link = make_directory_url(base_url, tag_item.num);
 		}
+		res.num = tag_item.num;
 	}
+}
+
+function join_path(x, y) {
+	if(x === null) {
+		return y;
+	}
+	if(y === null) {
+		return x;
+	}
+	if(x.endsWith("/") && y.startsWith("/")) {
+		return x.slice(0, x.length - 1) + y;
+	}
+	return x + y;
 }
 
 function fetch_resources(url, bookmark_list, controller = undefined) {
@@ -81,8 +95,9 @@ function fetch_resources(url, bookmark_list, controller = undefined) {
 
 		let item = items.find(v => v.num === info.num);
 		let encoded = item.path.split("/").map(c => encodeURIComponent(c)).join("/");
+		let joined = join_path(encoded, info.path);
 
-		return fetch_json(`/meta/directory${encoded}${info.path || ""}`, controller).then(r => ({
+		return fetch_json(`/meta/directory${joined}`, controller).then(r => ({
 			resources: insert_name_links(url, r.resources),
 			...r
 		}));
@@ -119,8 +134,11 @@ function fetch_resource_path(url, bookmark_list) {
 
 		console.log(items, info);
 		let item = items.find(v => v.num === info.num);
-		let encoded = item.path.split("/").map(c => encodeURIComponent(c)).join("/");
-		return `${encoded}${info.path || ""}`;
+		let decoded = null;
+		if(info.path !== null) {
+			decoded = info.path.split("/").map(c => decodeURIComponent(c)).join("/");
+		}
+		return join_path(item.path, decoded);
 	}
 
 	throw `unsupported resource url: ${url}`;

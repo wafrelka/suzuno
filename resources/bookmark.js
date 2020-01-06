@@ -12,25 +12,28 @@ class Table {
 	constructor() {
 		this._key_to_value = new Map();
 		this._value_to_key = new Map();
+		this._values = new Map();
 	}
 
 	set(key, value) {
 		set_default(this._key_to_value, key, new Set());
 		set_default(this._value_to_key, value.id, new Set());
-		this._key_to_value.get(key).add(value);
+		this._key_to_value.get(key).add(value.id);
 		this._value_to_key.get(value.id).add(key);
+		this._values.set(`${key}:${value.id}`, value);
 	}
 
 	unset(key, value) {
 		set_default(this._key_to_value, key, new Set());
 		set_default(this._value_to_key, value.id, new Set());
-		this._key_to_value.get(key).delete(value);
+		this._key_to_value.get(key).delete(value.id);
 		this._value_to_key.get(value.id).delete(key);
+		this._values.delete(`${key}:${value.id}`);
 	}
 
 	values(key) {
 		set_default(this._key_to_value, key, new Set());
-		return this._key_to_value.get(key);
+		return Array.from(this._key_to_value.get(key)).map(vid => this._values.get(`${key}:${vid}`));
 	}
 
 	keys(value) {
@@ -88,8 +91,15 @@ class BookmarkList {
 		}
 	}
 
+	new_tag(tag_id, main, name) {
+		this._name_to_tags.set(name, { id: tag_id, main: main });
+		let key = `tag:${tag_id}`;
+		let value = `${main ? "main" : ""}:${name}`;
+		this._storage.setItem(key, value);
+	}
+
 	set_tag(path, tag_id, num) {
-		this._tag_table.set(tag_id, { id: path, num: num });
+		this._tag_table.set(tag_id, { id: path, num: num.toString() });
 		let key = `bookmark:${tag_id}:${path}`;
 		let value = `${num}`;
 		this._storage.setItem(key, value);

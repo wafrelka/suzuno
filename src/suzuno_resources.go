@@ -27,6 +27,9 @@ func make_empty_resource_info(slash_path, name string) ResourceInfo {
 func (s *SuzunoServer) get_resource_info(slash_path string, file_info os.FileInfo) (ResourceInfo, bool) {
 
 	name := file_info.Name()
+	if slash_path == "/" {
+		name = "/"
+	}
 
 	if file_info.Mode().IsRegular() && has_image_ext(name) {
 		encoded_path := get_encoded_path(slash_path)

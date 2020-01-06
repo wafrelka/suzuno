@@ -13,8 +13,9 @@ class TaggerComponent {
 
 		let item_template = this._root.querySelector(".tagger-item.template");
 		let button_template = this._root.querySelector(".tagger-dialog-button.template");
+		let tags = this._bookmark_list.tags().sort((a, b) => a.name.localeCompare(b.name));
 
-		for(let tag of this._bookmark_list.tags()) {
+		for(let tag of tags) {
 
 			if(tag.main !== true) {
 				continue;

@@ -69,7 +69,7 @@ func NewSuzunoServer(root string) *SuzunoServer {
 		thumbnail_semaphore: semaphore.NewWeighted(20),
 	}
 	static_fs := FileSystemHandler(func(name string) (http.File, error) {
-		res_path := path.Join("/resources", strings.TrimPrefix(name, "/"))
+		res_path := path.Join("/assets", strings.TrimPrefix(name, "/"))
 		file, err := pkger.Open(res_path)
 		return file, err
 	})
@@ -79,7 +79,7 @@ func NewSuzunoServer(root string) *SuzunoServer {
 	assign_sub_handler(s.mux, "/thumbnail/", http.HandlerFunc(s.serve_thumbnail))
 	assign_sub_handler(s.mux, "/meta/directory/", http.HandlerFunc(s.serve_meta_directory))
 
-	s.mux.Handle("/view/", PkgerSingleFileHandler("/resources/view.html"))
+	s.mux.Handle("/view/", PkgerSingleFileHandler("/assets/view.html"))
 	assign_single_point(s.mux, "/", http.RedirectHandler("/view/", http.StatusFound))
 
 	return &s

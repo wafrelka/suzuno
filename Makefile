@@ -2,7 +2,7 @@ GO := go
 PKGER := pkger
 SRC_DIR := src
 SRC_PKGER := src/pkged.go
-RES_DIR := /resources
+ASSETS_DIR := /assets
 DEST := suzuno
 PKGER_URL := github.com/markbates/pkger/cmd/pkger
 
@@ -12,7 +12,7 @@ build: pack
 	$(GO) build -o $(DEST) $(SRC_DIR)/*
 	$(RM) $(SRC_PKGER)
 pack:
-	$(PKGER) -include $(RES_DIR) -o $(SRC_DIR)
+	$(PKGER) -include $(ASSETS_DIR) -o $(SRC_DIR)
 install_pkger:
 	$(GO) get $(PKGER_URL)
 clean:

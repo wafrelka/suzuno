@@ -50,6 +50,10 @@ func open_file_or_abort(native_path, etag_prefix string, w http.ResponseWriter, 
 		return nil
 	}
 
+	if req.Header.Get("Range") != "" || stat.Size() > 50000000 {
+		return file
+	}
+
 	hasher := sha1.New()
 	_, err = io.Copy(hasher, file)
 	if err != nil {

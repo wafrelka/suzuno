@@ -33,3 +33,14 @@ func has_image_ext(name string) bool {
 	}
 	return false
 }
+
+func has_video_ext(name string) bool {
+	exts := []string{".mp4"}
+	target := strings.ToLower(filepath.Ext(name))
+	for _, e := range exts {
+		if e == target {
+			return true
+		}
+	}
+	return false
+}

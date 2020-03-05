@@ -31,17 +31,29 @@ func (s *SuzunoServer) get_resource_info(slash_path string, file_info os.FileInf
 		name = "/"
 	}
 
-	if file_info.Mode().IsRegular() && has_image_ext(name) {
+	if file_info.Mode().IsRegular() {
 		encoded_path := get_encoded_path(slash_path)
-		return ResourceInfo{
-			Type: "file",
-			Name: name,
-			Path: slash_path,
-			ModifiedAt: file_info.ModTime().Unix(),
-			Size: file_info.Size(),
-			ThumbnailUrl: s.thumbnail_url_prefix + encoded_path,
-			FileUrl: s.file_url_prefix + encoded_path,
-		}, true
+		if has_image_ext(name) {
+			return ResourceInfo{
+				Type: "file",
+				Name: name,
+				Path: slash_path,
+				ModifiedAt: file_info.ModTime().Unix(),
+				Size: file_info.Size(),
+				ThumbnailUrl: s.thumbnail_url_prefix + encoded_path,
+				FileUrl: s.file_url_prefix + encoded_path,
+			}, true
+		} else if has_video_ext(name) {
+			return ResourceInfo{
+				Type: "file",
+				Name: name,
+				Path: slash_path,
+				ModifiedAt: file_info.ModTime().Unix(),
+				Size: file_info.Size(),
+				ThumbnailUrl: "",
+				FileUrl: s.file_url_prefix + encoded_path,
+			}, true
+		}
 	} else if file_info.IsDir() {
 		return ResourceInfo{
 			Type: "directory",

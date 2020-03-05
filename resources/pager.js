@@ -60,6 +60,11 @@ class Pager {
 				this._rot_history.set(n, (this._rot_history.get(n) || 0) + 1);
 				this._redraw_pages();
 			});
+			for(let t of v.querySelectorAll(".toolbox")) {
+				t.addEventListener("click", () => {
+					this.show_toolbox();
+				});
+			}
 			vi.addEventListener("load", () => { this._redraw_pages(); });
 			vi.addEventListener("error", () => { this._redraw_pages(); });
 

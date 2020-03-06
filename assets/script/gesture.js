@@ -8,6 +8,7 @@ class GestureHandler {
 		this._touch_number = 0;
 		this._effective_touch = null;
 		this._dragging = false;
+		this._touched = false;
 
 		this.on_started = () => {};
 		this.on_moved = () => {};
@@ -16,10 +17,10 @@ class GestureHandler {
 		this.on_tapped = () => {};
 
 		let touch_events = [
-			["touchstart", this._handle_touch_start, false],
-			["touchmove", this._handle_touch_move, false],
-			["touchend", this._handle_touch_end, true],
-			["touchcancel", this._handle_touch_cancel, true],
+			["touchstart", this._handle_touch_start],
+			["touchmove", this._handle_touch_move],
+			["touchend", this._handle_touch_end],
+			["touchcancel", this._handle_touch_cancel],
 		];
 		let mouse_events = [
 			["mousedown", this._handle_touch_start],
@@ -27,20 +28,21 @@ class GestureHandler {
 			["mouseup", this._handle_touch_end],
 		];
 
-		let touch_handler = (fn, cancel) => ((ev) => {
-			if(cancel === true) {
-				ev.preventDefault();
-			}
+		let touch_handler = (fn) => ((ev) => {
+			this._touched = true;
 			for(const t of ev.changedTouches) {
 				fn({x: t.pageX, y: t.pageY, id: t.identifier, target: ev.target});
 			}
 		});
 		let mouse_handler = (fn) => ((ev) => {
+			if(this._touched) {
+				return;
+			}
 			fn({x: ev.pageX, y: ev.pageY, id: "mouseevent", target: ev.target});
 		});
 
 		for(let ev of touch_events) {
-			let fn = touch_handler(ev[1].bind(this), ev[2]);
+			let fn = touch_handler(ev[1].bind(this));
 			this._root.addEventListener(ev[0], fn);
 		}
 		for(let ev of mouse_events) {

@@ -17,19 +17,21 @@
 			</div>
 			<div id="list">
 				<div class="list-container">
-					<div class="list-item template">
-						<a class="list-item-link">
-							<div class="list-item-image-container">
-								<img class="list-item-thumbnail" draggable="false" decoding="async">
-								<div class="list-item-stub list-item-icon"><i>image</i></div>
-							</div>
-							<div class="list-item-description">
-								<div class="list-item-dir-icon list-item-icon"><i>folder</i></div>
-								<div class="list-item-empty-icon list-item-icon"><i>link_off</i></div>
-								<div class="list-item-name-box"><div class="list-item-name"></div></div>
-							</div>
-						</a>
-					</div>
+					<template>
+						<div class="list-item">
+							<a class="list-item-link">
+								<div class="list-item-image-container">
+									<img class="list-item-thumbnail" draggable="false" decoding="async">
+									<div class="list-item-stub list-item-icon"><i>image</i></div>
+								</div>
+								<div class="list-item-description">
+									<div class="list-item-dir-icon list-item-icon"><i>folder</i></div>
+									<div class="list-item-empty-icon list-item-icon"><i>link_off</i></div>
+									<div class="list-item-name-box"><div class="list-item-name"></div></div>
+								</div>
+							</a>
+						</div>
+					</template>
 				</div>
 				<div class="list-loading-animation"></div>
 				<div class="list-loading-description"></div>
@@ -71,21 +73,23 @@
 			</div>
 			<div id="pager">
 				<div class="pager-container">
-					<div class="pager-page template">
-						<div class="pager-page-image-container">
-							<img class="pager-page-image" draggable="false" decoding="async">
-							<div class="pager-page-stub"><i>image</i></div>
-						</div>
-						<div class="pager-page-toolbox-top toolbox">
-								<a class="pager-page-back-link"><i>keyboard_arrow_left</i></a>
-								<div class="pager-page-description"><span class="pager-page-name"></span><span class="pager-page-size"></span>
-								</div>
-								<a class="pager-page-download-link" download><i>cloud_download</i></a>
+					<template>
+						<div class="pager-page">
+							<div class="pager-page-image-container">
+								<img class="pager-page-image" draggable="false" decoding="async">
+								<div class="pager-page-stub"><i>image</i></div>
 							</div>
-						<div class="pager-page-toolbox-bottom toolbox">
-							<button class="pager-page-rot-button"><i>rotate_right</i></button>
+							<div class="pager-page-toolbox-top toolbox">
+									<a class="pager-page-back-link"><i>keyboard_arrow_left</i></a>
+									<div class="pager-page-description"><span class="pager-page-name"></span><span class="pager-page-size"></span>
+									</div>
+									<a class="pager-page-download-link" download><i>cloud_download</i></a>
+								</div>
+							<div class="pager-page-toolbox-bottom toolbox">
+								<button class="pager-page-rot-button"><i>rotate_right</i></button>
+							</div>
 						</div>
-					</div>
+					</template>
 				</div>
 			</div>
 		</div>

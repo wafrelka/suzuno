@@ -1,42 +1,103 @@
-import { replace_img_src_if_needed, reset_img_src_if_incomplete } from "./imgsrc.js";
+import { build_component } from "./component.js";
 import { GestureHandler } from "./gesture.js";
 import { AnimationDebouncer } from "./animation.js";
 import { get_friendly_size_text } from "./util.js";
 
+function in_range(n, lo, hi) {
+	return lo <= n && n < hi;
+}
+
 class Pager {
 
-	constructor(root, extra_pages) {
+	constructor(root_elem, num_extra_pages) {
 
-		this._root = root;
-		this._back_link = "";
+		let back_fn = (ev) => {
+			ev.preventDefault();
+			this._on_back_requested(ev.currentTarget.href);
+		};
+		let rot_fn = () => {
+			let n = this._current_num;
+			let h = this._rot_history;
+			if(n === null) {
+				return;
+			}
+			h.set(n, (h.get(n) || 0) + 1);
+			this._redraw();
+		};
+		let completed_fn = () => {
+			if(this._initial_loading_phase) {
+				this._initial_loading_phase = false;
+				this._redraw();
+			}
+		};
+
+		this._view = build_component({
+			element: root_elem,
+			classes: ["active", "interacted"],
+			children: {
+				container: {
+					query: ".pager-container",
+					classes: ["animated"],
+					item_classes: ["visible", "blank-page"],
+					items: {
+						image_container: { query: ".pager-page-image-container", },
+						name: { query: ".pager-page-name", },
+						size: { query: ".pager-page-size", },
+						download_link: { query: ".pager-page-download-link", },
+						toolbox_top: {
+							query: ".pager-page-toolbox-top",
+							classes: ["active"],
+						},
+						toolbox_bottom: {
+							query: ".pager-page-toolbox-bottom",
+							classes: ["active"],
+						},
+						back_link: {
+							query: ".pager-page-back-link",
+							handlers: { click: back_fn, },
+						},
+						rot_button: {
+							query: ".pager-page-rot-button",
+							handlers: { click: rot_fn, },
+						},
+						image: {
+							query: ".pager-page-image",
+							classes: ["landscape", "animated"],
+							handlers: {
+								load: completed_fn,
+								error: completed_fn,
+							},
+						},
+					},
+				},
+			},
+		});
+
 		this._active = false;
-
-		this._extra_pages = extra_pages;
-		this._current_num = null;
 		this._resources = null;
 
+		this._num_extra_pages = num_extra_pages;
+		this._current_num = 0;
 		this._position = 0;
+		this._initial_loading_phase = false;
 		this._toolbox_activated_at = null;
 		this._rot_history = new Map();
 
+		this._view.container.resize(this._num_extra_pages * 2 + 1);
+
 		this._move_animation = new AnimationDebouncer((param) => {
-			let container = this._root.querySelector(".pager-container");
-			if(param.animation === true) {
-				container.classList.add("animated");
-			} else {
-				container.classList.remove("animated");
-			}
-			container.style.transform = param.transform;
+			this._view.container.animated = param.animation;
+			this._view.container.element.style.transform = param.transform;
 		});
 
 		this._on_page_changed = () => {};
 		this._on_back_requested = () => {};
 
-		this._setup_extra_pages();
 		this._move_to_base();
 
-		let img_containers = this._root.querySelectorAll(".pager-page-image-container");
+		let img_containers = this._view.container.items.map(x => x.image_container.element);
 		let gesture_handler = new GestureHandler(img_containers);
+		this._gesture_handler = gesture_handler;
 
 		gesture_handler.on_moved = (dx, _) => {
 			this._move_to(-dx);
@@ -44,11 +105,10 @@ class Pager {
 		gesture_handler.on_swiped = (dir) => {
 
 			let mov = -dir;
-			let next_num = (this._current_num !== null ? this._current_num + mov : null);
-			let res_len = (this._resources !== null ? this._resources.length : -1);
-			let in_range = (next_num >= 0 && next_num < res_len);
+			let next_num = this._current_num + mov;
+			let res_len = (this._resources !== null ? this._resources.length : 0);
 
-			if(next_num !== this._current_num && in_range) {
+			if(next_num !== this._current_num && in_range(next_num, 0, res_len)) {
 				this._on_page_changed(next_num);
 			} else {
 				this._move_to_base_animated();
@@ -60,41 +120,7 @@ class Pager {
 		};
 		gesture_handler.on_canceled = () => {
 			this._move_to_base_animated();
-		}
-
-		this._gesture_handler = gesture_handler;
-	}
-
-	_setup_extra_pages() {
-
-		let template = this._root.querySelector(".pager-page.template");
-		let container = this._root.querySelector(".pager-container");
-
-		for(let i = 0; i < this._extra_pages * 2 + 1; i += 1) {
-
-			let v = template.cloneNode(true);
-			let vi = v.querySelector(".pager-page-image");
-
-			v.classList.remove("template");
-			v.querySelector(".pager-page-back-link").addEventListener("click", (ev) => {
-				ev.preventDefault();
-				this._on_back_requested(ev.currentTarget.href);
-			});
-			v.querySelector(".pager-page-rot-button").addEventListener("click", (ev) => {
-				let n = this._current_num;
-				if(n === null) {
-					return;
-				}
-				this._rot_history.set(n, (this._rot_history.get(n) || 0) + 1);
-				this._redraw_pages();
-			});
-			vi.addEventListener("load", () => { this._redraw_pages(); });
-			vi.addEventListener("error", () => { this._redraw_pages(); });
-
-			container.appendChild(v);
-		}
-
-		container.removeChild(template);
+		};
 	}
 
 	set on_page_changed(fn) {
@@ -109,7 +135,7 @@ class Pager {
 
 		this._position = position;
 
-		let trans_x_base = (this._extra_pages + page_diff) * -100;
+		let trans_x_base = (this._num_extra_pages + page_diff) * -100;
 		let trans_x = -position;
 
 		let arg = {
@@ -136,93 +162,60 @@ class Pager {
 		this._move_to(0);
 	}
 
-	_rotate_to(elem, direction, animated = false) {
+	_redraw_page(index, page_num, visible, loading) {
 
-		let deg = direction * 90;
-		let landscape = ((direction & 1) == 1);
+		let item = this._view.container.items[index];
 
-		if(animated) {
-			elem.classList.add("animated");
-		} else {
-			elem.classList.remove("animated");
-		}
-		if(landscape) {
-			elem.classList.add("landscape");
-		} else {
-			elem.classList.remove("landscape");
-		}
+		let res_len = (this._resources === null ? 0 : this._resources.length);
+		let blank = !in_range(page_num, 0, res_len);
 
-		elem.style.transform = `rotate(${deg}deg)`;
-	}
+		item.visible = visible;
+		item.blank_page = blank;
 
-	_redraw_single_page(elem, page_num, img_delayed, visible, rot_animated) {
-
-		let img_elem = elem.querySelector(".pager-page-image");
-		let name_elem = elem.querySelector(".pager-page-name");
-		let size_elem = elem.querySelector(".pager-page-size");
-		let download_link_elem = elem.querySelector(".pager-page-download-link");
-
-		if(visible) {
-			elem.classList.add("visible");
-		} else {
-			elem.classList.remove("visible");
-		}
-
-		if(this._resources === null || page_num === null ||
-			page_num < 0 || page_num >= this._resources.length) {
-
-			elem.classList.add("blank-page");
-			name_elem.textContent = "";
-			size_elem.textContent = "";
-			download_link_elem.href = "";
-
-			reset_img_src_if_incomplete(img_elem);
-
-			return img_elem.complete;
+		if(blank) {
+			item.name.text = "";
+			item.size.text = "";
+			item.download_link.href = "";
+			item.image.active = false;
+			item.image.src = null;
+			return item.image.complete;
 		}
 
 		let res = this._resources[page_num];
 
-		elem.classList.remove("blank-page");
-		name_elem.textContent = res.name;
-		size_elem.textContent = get_friendly_size_text(res.size);
-		download_link_elem.href = res.file_url;
-
-		img_elem.dataset.src = res.file_url;
-		if(img_delayed === true) {
-			img_elem.src = "";
-		} else {
-			replace_img_src_if_needed(img_elem);
-		}
+		item.name.text = res.name;
+		item.size.text = get_friendly_size_text(res.size);
+		item.download_link.href = res.file_url;
+		item.image.active = loading;
+		item.image.src = res.file_url;
 
 		let rot = this._rot_history.get(page_num) || 0;
-		this._rotate_to(img_elem, rot, rot_animated);
+		let deg = rot * 90;
+		let landscape = ((rot & 1) == 1);
+		item.image.landscape = landscape;
+		item.image.animated = this._active;
+		item.image.element.style.transform = `rotate(${deg}deg)`;
 
-		return img_elem.complete;
+		return item.image.complete;
 	}
 
-	_redraw_pages(initial = false) {
-
-		let pages = this._root.querySelectorAll(".pager-page");
-		let cur_page = pages[this._extra_pages];
-
-		let cur_ok = this._redraw_single_page(cur_page, this._current_num, false, true, !initial);
-
-		for(let d = -this._extra_pages; d <= this._extra_pages; d += 1) {
+	_redraw() {
+		let n = this._num_extra_pages;
+		let cur_ok = this._redraw_page(n, this._current_num, true, true);
+		for(let d = -n; d <= n; d += 1) {
 			if(d === 0) {
 				continue;
 			}
-			let v = pages[d + this._extra_pages];
-			let p = (this._current_num !== null ? this._current_num + d : null);
-			let near = !(d > 2 || d < -2);
-			this._redraw_single_page(v, p, !cur_ok && initial, near, !initial);
+			let visible = (-1 <= d && d <= 1);
+			let loading = !this._initial_loading_phase || cur_ok;
+			this._redraw_page(n + d, this._current_num + d, visible, loading);
 		}
 	}
 
 	hide_toolbox() {
-		let toolboxes = this._root.querySelectorAll(".pager-page .toolbox");
-		for(let elem of toolboxes) {
-			elem.classList.remove("active");
+		for(let item of this._view.container.items) {
+			item.toolbox_top.active = false;
+			item.toolbox_bottom.active = false;
 		}
 		this._toolbox_activated_at = null;
 	}
@@ -230,11 +223,11 @@ class Pager {
 	show_toolbox() {
 
 		this._toolbox_activated_at = Date.now();
-		let toolboxes = this._root.querySelectorAll(".pager-page .toolbox");
 		let timeout = 5000;
 
-		for(let elem of toolboxes) {
-			elem.classList.add("active");
+		for(let item of this._view.container.items) {
+			item.toolbox_top.active = true;
+			item.toolbox_bottom.active = true;
 		}
 
 		let deactivation_fn = () => {
@@ -260,42 +253,30 @@ class Pager {
 
 	change_page(page_num) {
 
-		if(this._resources !== null) {
-			page_num = Math.min(page_num, this._resources.length - 1);
-		}
-		page_num = Math.max(page_num, 0);
-
-		let diff = this._current_num !== null ? (page_num - this._current_num) : null;
+		let diff = page_num - this._current_num;
 		this._current_num = page_num;
 
-		let near = (diff !== null && Math.abs(diff) <= this._extra_pages);
+		if(this._active && diff !== 0) {
+			this._initial_loading_phase = false;
+		}
 
+		let near = (Math.abs(diff) <= this._num_extra_pages);
 		if(near) {
-
 			let front_to_back = (diff >= 0);
-			let container = this._root.querySelector(".pager-container");
-
 			for(let i = 0; i < Math.abs(diff); i += 1) {
-				if(front_to_back) {
-					let v = container.firstElementChild;
-					container.removeChild(v);
-					container.appendChild(v);
-				} else {
-					let v = container.lastElementChild;
-					container.removeChild(v);
-					container.insertBefore(v, container.firstElementChild);
-				}
+				this._view.container.rotate_items(front_to_back);
 			}
-
-			this._move_to(this._position, -diff);
-			this._move_to_base_animated_after();
-
+			if(this._active) {
+				this._move_to(this._position, -diff);
+				this._move_to_base_animated_after();
+			} else {
+				this._move_to_base();
+			}
 		} else {
-
 			this._move_to_base();
 		}
 
-		this._redraw_pages(!near);
+		this._redraw();
 	}
 
 	activate() {
@@ -303,9 +284,10 @@ class Pager {
 			return;
 		}
 		this._active = true;
-		this._root.classList.add("active");
-		this._root.classList.add("interacted");
-		this._redraw_pages(true);
+		this._initial_loading_phase = true;
+		this._view.active = true;
+		this._view.interacted = true;
+		this._redraw();
 	}
 
 	deactivate() {
@@ -313,32 +295,25 @@ class Pager {
 			return;
 		}
 		this._active = false;
-		this._root.classList.remove("active");
-		this._current_num = null;
-		for(let img_elem of this._root.querySelectorAll(".pager-page-image")) {
-			reset_img_src_if_incomplete(img_elem);
-		}
+		this._view.active = false;
+		this._redraw();
 	}
 
 	update(resources) {
-
 		/*
 			resources := array({
 				name: string,
 				file_url: string,
 			})
 		*/
-
 		this._resources = resources;
-		this._current_num = null;
-		this._redraw_pages(true);
 		this._rot_history = new Map();
+		this._redraw();
 	}
 
 	update_back_link(back_link) {
-		this._back_link = back_link;
-		for(let back_link_elem of this._root.querySelectorAll(".pager-page-back-link")) {
-			back_link_elem.href = this._back_link;
+		for(let item of this._view.container.items) {
+			item.back_link.href = back_link;
 		}
 	}
 }

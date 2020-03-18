@@ -1,24 +1,65 @@
-import { replace_img_src_if_needed, reset_img_src_if_incomplete } from "./imgsrc.js";
+import { build_component } from "./component.js";
 import { request_after_redraw } from "./animation.js";
 
 class List {
 
-	constructor(root) {
+	constructor(root_elem) {
 
-		this._root = root;
+		let click_fn = (ev) => {
+			let link_class = "list-item-link";
+			let target = ev.target;
+			while(target != ev.currentTarget) {
+				if(target.classList.contains(link_class)) {
+					break;
+				}
+				target = target.parentElement;
+			}
+			if(!target.classList.contains(link_class)) {
+				return;
+			}
+			ev.preventDefault();
+			let type = target.dataset.type;
+			let link = target.href;
+			if(type == "file") {
+				this._on_file_selected(link);
+			} else if(type == "directory") {
+				this._on_directory_selected(link);
+			}
+		};
+
+		this._view = build_component({
+			element: root_elem,
+			classes: ["active", "load-completed", "load-failed"],
+			children: {
+				loading_desc: { query: ".list-loading-description", },
+				list: {
+					query: ".list-container",
+					item_classes: [
+						"hidden-item", "dir-item", "file-item", "empty-item", "highlighted",
+					],
+					handlers: { click: click_fn, },
+					items: {
+						thumbnail: { query: ".list-item-thumbnail", },
+						name: { query: ".list-item-name", },
+						link: { query: ".list-item-link", },
+					},
+				},
+			},
+		});
+
 		this._active = false;
+		this._last_highlighted = null;
+		this._visible = [];
 		this._on_file_selected = () => {};
 		this._on_directory_selected = () => {};
 
 		let observer_options = {
-			root: this._root.querySelector(".list-container"),
+			root: this._view.list.element,
 			rootMargin: "100% 0% 100% 0%",
 			threshold: 0,
 		};
 		let observer_callback = this._update_img_visibility.bind(this);
 		this._observer = new IntersectionObserver(observer_callback, observer_options);
-
-		this._last_highlighted = null;
 
 		this.reset();
 	}
@@ -34,99 +75,82 @@ class List {
 	_update_img_visibility(entries) {
 
 		for(let entry of entries) {
-
 			let target = entry.target;
-			let img_elem = target.querySelector(".list-item-thumbnail");
-
 			let visible = entry.isIntersecting;
-			img_elem.dataset.state = (visible ? "visible" : "hidden");
+			let index = this._view.list.find_index(target);
+			let item = this._view.list.items[index];
+			item.hidden_item = !visible;
+			item.thumbnail.active = this._active && visible;
+			this._visible[index] = visible;
+		}
+	}
 
-			if(visible) {
-				target.classList.remove("hidden-item");
-			} else {
-				target.classList.add("hidden-item");
-			}
-
-			if(visible && this._active && img_elem.dataset.src !== "") {
-				replace_img_src_if_needed(img_elem);
-			} else {
-				reset_img_src_if_incomplete(img_elem);
-			}
+	_set_active(active) {
+		if(this._active === active) {
+			return;
+		}
+		this._active = active;
+		this._view.active = active;
+		let items = this._view.list.items;
+		for(let index = 0; index < items.length; index += 1) {
+			items[index].thumbnail.active = active && this._visible[index];
 		}
 	}
 
 	activate_thumbnails() {
-		if(this._active) {
-			return;
-		}
-		this._active = true;
-		this._root.classList.add("active");
-		let visible_elems = this._root.querySelectorAll(".list-item-thumbnail[data-state=\"visible\"]");
-		for(let img_elem of visible_elems) {
-			replace_img_src_if_needed(img_elem);
-		}
+		this._set_active(true);
 	}
 
 	deactivate_partial_thumbnails() {
-		if(!this._active) {
-			return;
-		}
-		this._active = false;
-		this._root.classList.remove("active");
-		let visible_elems = this._root.querySelectorAll(".list-item-thumbnail[data-state=\"visible\"]");
-		for(let img_elem of visible_elems) {
-			reset_img_src_if_incomplete(img_elem);
-		}
+		this._set_active(false);
 	}
 
 	set_error_message(text) {
-		this._root.classList.remove("load-completed");
-		this._root.classList.add("load-failed");
-		this._root.querySelector(".list-loading-description").textContent = text;
+		this._view.load_completed = false;
+		this._view.load_failed = true;
+		this._view.loading_desc.text = text;
 	}
 
 	reset() {
-		this._root.classList.remove("load-completed");
-		this._root.classList.remove("load-failed");
-		this._root.querySelector(".list-loading-description").textContent = "";
-		let visible_elems = this._root.querySelectorAll(".list-item-thumbnail[data-state=\"visible\"]");
-		for(let img_elem of visible_elems) {
-			img_elem.dataset.src = "";
-			img_elem.src = "";
+		this._view.load_completed = false;
+		this._view.load_failed = false;
+		this._view.loading_desc.text = "";
+		for(let item of this._view.list.items) {
+			item.thumbnail.active = false;
 		}
 	}
 
 	reset_scroll() {
-
-		let container = this._root.querySelector(".list-container");
-
 		if(this._last_highlighted !== null) {
-			this._last_highlighted.classList.remove("highlighted");
+			this._last_highlighted.highlighted = false;
 			this._last_highlighted = null;
 		}
-		container.scrollTo(0, 0);
+		request_after_redraw(() => {
+			this._view.list.element.scrollTo(0, 0);
+		});
 	}
 
 	scroll_to(index) {
 
-		let container = this._root.querySelector(".list-container");
-		let items = container.children; // items[0] is the template element
-		if(index < 0 || index >= items.length - 1) {
+		let items = this._view.list.items;
+		if(index < 0 || index >= items.length) {
 			return;
 		}
-		let item = items[index + 1];
+		let item = items[index];
 
 		if(this._last_highlighted !== null) {
-			this._last_highlighted.classList.remove("highlighted");
+			this._last_highlighted.highlighted = false;
 			this._last_highlighted = null;
 		}
 
 		request_after_redraw(() => {
 
-			let item_height = item.offsetHeight;
-			let item_top = item.offsetTop;
+			let elem = item.element;
+			let item_height = elem.offsetHeight;
+			let item_top = elem.offsetTop;
 			let item_bottom = item_top + item_height;
 
+			let container = this._view.list.element;
 			let view_height = container.offsetHeight;
 			let view_top = container.scrollTop;
 			let view_bottom = view_top + view_height;
@@ -143,18 +167,18 @@ class List {
 			container.scrollBy(0, diff);
 
 			if(this._last_highlighted === null) {
-				this._last_highlighted = item;
-				item.classList.add("highlighted");
+				this._last_highlighted = this._view.list.items[index];
+				this._last_highlighted.highlighted = true;
 			}
 		});
 	}
 
 	dump_scroll_state() {
-		return this._root.querySelector(".list-container").scrollTop;
+		return this._view.list.element.scrollTop;
 	}
 
 	restore_scroll_state(state) {
-		this._root.querySelector(".list-container").scrollTo(0, state);
+		this._view.list.element.scrollTo(0, state);
 	}
 
 	update(resources) {
@@ -168,75 +192,30 @@ class List {
 			})
 		*/
 
-		this._root.classList.add("load-completed");
-
-		let template = this._root.querySelector(".template");
-		let container = this._root.querySelector(".list-container");
-		let length = resources.length;
-
-		let click_fn = (ev) => {
-			ev.preventDefault();
-			let target = ev.currentTarget;
-			let type = target.dataset.type;
-			let link = target.href;
-			if(type == "file") {
-				this._on_file_selected(link);
-			} else if(type == "directory") {
-				this._on_directory_selected(link);
-			}
-		};
+		this._view.load_completed = true;
+		this._last_highlighted = null;
 
 		this._observer.disconnect();
+		this._view.list.resize(resources.length);
+		this._visible = Array.from({ length: resources.length }, () => false);
 
-		for(let i = container.children.length - 1; i > length; i -= 1) {
-			container.removeChild(container.lastElementChild);
-		}
-		for(let i = container.children.length - 1; i < length; i += 1) {
-			let v = template.cloneNode(true);
-			v.querySelector(".list-item-link").addEventListener("click", click_fn);
-			v.classList.remove("template");
-			container.appendChild(v);
-		}
-		let children = Array.from(container.children);
+		for(let i = 0; i < resources.length; i += 1) {
 
-		for(let i = 0; i < length; i += 1) {
+			let item = this._view.list.items[i];
+			let res = resources[i];
 
-			let item = resources[i];
-			let v = children[i + 1]; // children[0] is the template
+			this._observer.observe(item.element);
 
-			this._observer.observe(v);
-
-			let thumbnail_elem = v.querySelector(".list-item-thumbnail");
-			let name_elem = v.querySelector(".list-item-name");
-			let link_elem = v.querySelector(".list-item-link");
-
-			thumbnail_elem.dataset.src = "";
-			reset_img_src_if_incomplete(thumbnail_elem);
-			name_elem.textContent = item.name;
-			link_elem.dataset.type = item.type;
-			link_elem.href = "";
-
-			if("link" in item) {
-				link_elem.href = item.link;
-			}
-			if("thumbnail_url" in item) {
-				thumbnail_elem.dataset.src = item.thumbnail_url;
-			}
-
-			let type_class = "empty-item";
-			if(item.type == "file") {
-				type_class = "file-item";
-			} else if(item.type == "directory") {
-				type_class = "dir-item";
-			}
-
-			for(let c of ["dir-item", "file-item", "empty-item"]) {
-				if(c !== type_class) {
-					v.classList.remove(c);
-				}
-			}
-			v.classList.add(type_class);
-			v.classList.add("hidden-item");
+			item.thumbnail.active = false;
+			item.thumbnail.src = res.thumbnail_url || null;
+			item.name.text = res.name;
+			item.link.dataset.type = res.type;
+			item.link.href = res.link || null;
+			item.empty_item = (res.type != "file" && res.type != "directory");
+			item.dir_item = (res.type == "directory");
+			item.file_item = (res.type == "file");
+			item.hidden_item = true;
+			item.highlighted = false;
 		}
 	}
 }

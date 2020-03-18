@@ -224,9 +224,7 @@ class Controller {
 		let p = get_page(cur.location);
 
 		if(p !== null) {
-			if(cur.resources !== null) {
-				this._pager.change_page(p);
-			}
+			this._pager.change_page(p);
 			this._pager.activate();
 			this._list.deactivate_partial_thumbnails();
 		} else {

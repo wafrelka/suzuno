@@ -29,7 +29,14 @@ class Pager {
 			container.style.transform = param.transform;
 		});
 
-		let gesture_handler = new GestureHandler(this._root.querySelector(".pager-container"));
+		this._on_page_changed = () => {};
+		this._on_back_requested = () => {};
+
+		this._setup_extra_pages();
+		this._move_to_base();
+
+		let img_containers = this._root.querySelectorAll(".pager-page-image-container");
+		let gesture_handler = new GestureHandler(img_containers);
 
 		gesture_handler.on_moved = (dx, _) => {
 			this._move_to(-dx);
@@ -56,12 +63,6 @@ class Pager {
 		}
 
 		this._gesture_handler = gesture_handler;
-
-		this._on_page_changed = () => {};
-		this._on_back_requested = () => {};
-
-		this._setup_extra_pages();
-		this._move_to_base();
 	}
 
 	_setup_extra_pages() {

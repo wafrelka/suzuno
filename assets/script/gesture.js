@@ -1,8 +1,7 @@
 class GestureHandler {
 
-	constructor(root_element) {
+	constructor(elements) {
 
-		this._root = root_element;
 		this._document = document.documentElement;
 
 		this._touch_number = 0;
@@ -41,13 +40,15 @@ class GestureHandler {
 			fn({x: ev.pageX, y: ev.pageY, id: "mouseevent", target: ev.target});
 		});
 
-		for(let ev of touch_events) {
-			let fn = touch_handler(ev[1].bind(this));
-			this._root.addEventListener(ev[0], fn);
-		}
-		for(let ev of mouse_events) {
-			let fn = mouse_handler(ev[1].bind(this));
-			this._root.addEventListener(ev[0], fn);
+		for(let elem of elements) {
+			for(let ev of touch_events) {
+				let fn = touch_handler(ev[1].bind(this));
+				elem.addEventListener(ev[0], fn);
+			}
+			for(let ev of mouse_events) {
+				let fn = mouse_handler(ev[1].bind(this));
+				elem.addEventListener(ev[0], fn);
+			}
 		}
 	}
 

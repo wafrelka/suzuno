@@ -94,14 +94,14 @@ class Pager {
 		this._on_page_changed = () => {};
 		this._on_back_requested = () => {};
 
-		this._move_to_base();
+		this._set_to(0);
 
 		let img_containers = this._view.container.items.map(x => x.image_container.element);
 		let gesture_handler = new GestureHandler(img_containers);
 		this._gesture_handler = gesture_handler;
 
 		gesture_handler.on_moved = (dx, _) => {
-			this._move_to(-dx);
+			this._set_to(-dx);
 		};
 		gesture_handler.on_swiped = (dir) => {
 
@@ -112,15 +112,15 @@ class Pager {
 			if(next_num !== this._current_num && in_range(next_num, 0, res_len)) {
 				this._on_page_changed(next_num);
 			} else {
-				this._move_to_base_animated();
+				this._slide_to(0);
 			}
 		};
 		gesture_handler.on_tapped = () => {
-			this._move_to_base_animated();
+			this._slide_to(0);
 			this.toggle_toolbox();
 		};
 		gesture_handler.on_canceled = () => {
-			this._move_to_base_animated();
+			this._slide_to(0);
 		};
 	}
 
@@ -132,35 +132,29 @@ class Pager {
 		this._on_back_requested = fn;
 	}
 
-	_move_to(position, page_diff = 0, animation = false, queueing = false) {
+	_move_container_to(position, page_diff, immediate) {
 
 		this._position = position;
-
 		let trans_x_base = (this._num_extra_pages + page_diff) * -100;
 		let trans_x = -position;
 
 		let arg = {
 			transform: `translateX(${trans_x_base}%) translateX(${trans_x}px)`,
-			animation: animation,
+			animation: !immediate,
 		};
-
-		if(queueing === true) {
-			this._move_animation.push_after(arg);
+		if(immediate) {
+			this._move_animation.write(arg);
 		} else {
 			this._move_animation.push(arg);
 		}
 	}
 
-	_move_to_base_animated_after() {
-		this._move_to(0, 0, true, true);
+	_set_to(position, page_diff = 0) {
+		this._move_container_to(position, page_diff, true);
 	}
 
-	_move_to_base_animated() {
-		this._move_to(0, 0, true);
-	}
-
-	_move_to_base() {
-		this._move_to(0);
+	_slide_to(position, page_diff = 0) {
+		this._move_container_to(position, page_diff, false);
 	}
 
 	_redraw_page(index, page_num, visible, loading) {
@@ -267,14 +261,13 @@ class Pager {
 			for(let i = 0; i < Math.abs(diff); i += 1) {
 				this._view.container.rotate_items(front_to_back);
 			}
-			if(this._active) {
-				this._move_to(this._position, -diff);
-				this._move_to_base_animated_after();
-			} else {
-				this._move_to_base();
-			}
+		}
+
+		if(near && this._active) {
+			this._set_to(this._position, -diff);
+			this._slide_to(0);
 		} else {
-			this._move_to_base();
+			this._set_to(0);
 		}
 
 		this._redraw();

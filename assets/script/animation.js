@@ -9,7 +9,7 @@ class AnimationDebouncer {
 
 		let empty = (this._requests.length === 0);
 
-		if(this._requests.length > 0 && !queueing) {
+		while(!queueing && this._requests.length > 0) {
 			this._requests.pop();
 		}
 		this._requests.push(param);
@@ -31,11 +31,11 @@ class AnimationDebouncer {
 	}
 
 	push(param) {
-		this._add_request(param, false);
+		this._add_request(param, true);
 	}
 
-	push_after(param) {
-		this._add_request(param, true);
+	write(param) {
+		this._add_request(param, false);
 	}
 }
 

@@ -27,21 +27,23 @@ class List {
 			}
 		};
 
-		this._view = build_component({
-			element: root_elem,
+		this._view = build_component(root_elem, {
 			classes: ["active", "load-completed", "load-failed"],
 			children: {
 				loading_desc: { query: ".list-loading-description", },
 				list: {
 					query: ".list-container",
-					item_classes: [
-						"hidden-item", "dir-item", "file-item", "empty-item", "highlighted",
-					],
 					handlers: { click: click_fn, },
 					items: {
-						thumbnail: { query: ".list-item-thumbnail", },
-						name: { query: ".list-item-name", },
-						link: { query: ".list-item-link", },
+						classes: [
+							"hidden-item", "highlighted",
+							"dir-item", "file-item", "empty-item",
+						],
+						children: {
+							thumbnail: { query: ".list-item-thumbnail", },
+							name: { query: ".list-item-name", },
+							link: { query: ".list-item-link", },
+						},
 					},
 				},
 			},

@@ -1,45 +1,19 @@
-export class PlainComponent {
+class PlainComponent {
 
-	constructor(element, classes) {
-
+	constructor(element) {
 		this.element = element;
-
-		classes = classes || [];
-
-		for(let class_name of classes) {
-
-			let prop_name = class_name.replace("-", "_");
-
-			let value = null;
-			let setter = (new_value) => {
-				if(value === new_value) {
-					return;
-				}
-				value = new_value;
-				if(new_value) {
-					this.element.classList.add(class_name);
-				} else {
-					this.element.classList.remove(class_name);
-				}
-			};
-			Object.defineProperty(this, prop_name, { set: setter });
-		}
+		this.classes = {};
 	}
 
 	get dataset() {
 		return this.element.dataset;
 	}
-
-	on(event_name, fn) {
-		let c = this;
-		this.element.addEventListener(event_name, (ev) => fn(ev, c));
-	}
 }
 
-export class TextComponent extends PlainComponent {
+class TextComponent extends PlainComponent {
 
-	constructor(element, classes) {
-		super(element, classes);
+	constructor(element) {
+		super(element);
 		this._text = null;
 	}
 
@@ -55,10 +29,10 @@ export class TextComponent extends PlainComponent {
 	}
 }
 
-export class LinkComponent extends PlainComponent {
+class LinkComponent extends PlainComponent {
 
-	constructor(element, classes) {
-		super(element, classes);
+	constructor(element) {
+		super(element);
 		this._href = null;
 	}
 
@@ -74,12 +48,10 @@ export class LinkComponent extends PlainComponent {
 	}
 }
 
-export class ImageComponent extends PlainComponent {
+class ImageComponent extends PlainComponent {
 
-	constructor(element, classes) {
-
-		super(element, classes);
-
+	constructor(element) {
+		super(element);
 		this._image_active = null;
 		this._image_src = null;
 		this._actual_src = null;
@@ -121,15 +93,16 @@ export class ImageComponent extends PlainComponent {
 	}
 }
 
-export class ComponentList extends PlainComponent {
+// fill `this.item_proto` with some concrete component type
+class ComponentListTemplate extends PlainComponent {
 
-	constructor(element, classes, ctor) {
+	constructor(element) {
 
-		super(element, classes);
+		super(element);
 
-		this._list_ctor = ctor;
-		let template = element.querySelector(":scope > template");
-		this._list_template = element.removeChild(template).content.firstElementChild;
+		let template_element = element.querySelector(":scope > template");
+		this._template = template_element.content.firstElementChild;
+		element.removeChild(template_element);
 
 		this._list_components = [];
 		this._list_unused_components = [];
@@ -145,10 +118,10 @@ export class ComponentList extends PlainComponent {
 			let index = length + i;
 			let comp = this._list_unused_components.pop();
 			if(comp === undefined) {
-				let elem = this._list_template.cloneNode(true);
-				comp = this._list_ctor(elem);
+				let elem = this._template.cloneNode(true);
+				comp = new this.item_proto(elem);
 			}
-			comp.element.dataset.listIndex = index.toString();
+			comp.dataset.listIndex = index.toString();
 			this.element.appendChild(comp.element);
 			this._list_components.push(comp);
 		}
@@ -173,7 +146,7 @@ export class ComponentList extends PlainComponent {
 			this.element.insertBefore(item.element, this.element.firstElementChild);
 		}
 		for(let i = 0; i < this._list_components.length; i += 1) {
-			this._list_components[i].element.dataset.listIndex = i.toString();
+			this._list_components[i].dataset.listIndex = i.toString();
 		}
 	}
 
@@ -187,73 +160,130 @@ export class ComponentList extends PlainComponent {
 	}
 }
 
-export class ComponentContainer extends PlainComponent {
-
-	constructor(element, classes, children) {
-
-		super(element, classes);
-
-		for(let [name, comp] of Object.entries(children)) {
-			this[name] = comp;
-		}
+function hint_select(hint, query) {
+	if(hint === undefined) {
+		return undefined;
 	}
+	return hint.querySelector(query);
 }
 
-function build_component_with_root_element(mapping, root_element) {
-
-	let element = mapping.element || root_element.querySelector(mapping.query);
-	if(element === undefined || element === null) {
-		console.error(`undefined element (${mapping.element}, ${mapping.query})`);
+function hint_select_template(hint) {
+	let h = hint_select(hint, ":scope > template");
+	if(h === undefined) {
+		return h;
 	}
-	let classes = mapping.classes;
-	let component = null;
+	return h.content.firstElementChild;
+}
 
-	if(mapping.children !== undefined) {
+/*
+	params := {
+		type: optional(string),
+		classes: array(string),
+		handlers: string -> fn,
+		children: string -> query + params,
+		items: params,
+	}
+*/
 
-		let ch_comps = {};
-		for(let [name, m] of Object.entries(mapping.children)) {
-			ch_comps[name] = build_component_with_root_element(m, element);
-		}
-		component = new ComponentContainer(element, classes, ch_comps);
+function define_component(params, hint) {
 
-	} else if(mapping.items !== undefined) {
+	let proto = null;
 
-		let ctor = (item_elem) => {
-			let m = {
-				element: item_elem,
-				classes: mapping.item_classes,
-				handlers: mapping.item_handlers,
-				children: mapping.items,
+	if(params.children !== undefined) {
+
+		let children = {};
+		for(let [key, value] of Object.entries(params.children)) {
+			let prop_hint = hint_select(hint, value.query);
+			children[key] = {
+				proto: define_component(value, prop_hint),
+				query: value.query,
 			};
-			return build_component_with_root_element(m, item_elem);
 		}
 
-		component = new ComponentList(element, classes, ctor);
+		proto = class extends PlainComponent {
+			constructor(element) {
+				super(element);
+				for(let [key, value] of Object.entries(children)) {
+					let e = this.element.querySelector(value.query);
+					this[key] = new value.proto(e);
+				}
+			}
+		};
+
+	} else if(params.items !== undefined) {
+
+		let template_hint = hint_select_template(hint);
+		let item_proto = define_component(params.items, template_hint);
+
+		proto = class extends ComponentListTemplate{};
+		proto.prototype.item_proto = item_proto;
+
+	} else if(hint !== undefined) {
+
+		let tag = hint.tagName;
+
+		if(tag == "IMG") {
+			proto = class extends ImageComponent{};
+		} else if(tag == "A") {
+			proto = class extends LinkComponent{};
+		} else if(hint.childElementCount > 0) {
+			proto = class extends PlainComponent{};
+		} else {
+			proto = class extends TextComponent{};
+		}
 
 	} else {
 
-		if(element.tagName === "IMG") {
-			component = new ImageComponent(element, classes);
-		} else if(element.tagName == "A") {
-			component = new LinkComponent(element, classes);
-		} else if(element.childElementCount == 0) {
-			component = new TextComponent(element, classes);
+		let type = params.type;
+
+		if(type === "image") {
+			proto = class extends ImageComponent{};
+		} else if(type === "link") {
+			proto = class extends LinkComponent{};
+		} else if(type === "text") {
+			proto = class extends TextComponent{};
 		} else {
-			component = new PlainComponent(element, classes);
+			proto = class extends PlainComponent{};
 		}
 	}
 
-	if(component === null) {
-		return null;
+	for(let class_name of (params.classes || [])) {
+		let prop_name = class_name.replace("-", "_");
+		let prop = {
+			set: function(value) {
+				if(this.classes[class_name] === value) {
+					return;
+				}
+				this.classes[class_name] = value;
+				if(value) {
+					this.element.classList.add(class_name);
+				} else {
+					this.element.classList.remove(class_name);
+				}
+			},
+		};
+		Object.defineProperty(proto.prototype, prop_name, prop);
 	}
 
-	for(let [ev, fn] of Object.entries(mapping.handlers || {})) {
-		component.on(ev, fn);
+	if(params.handlers !== undefined) {
+
+		let proto_extended = class extends proto {
+			constructor(element) {
+				super(element);
+				for(let [event_name, fn] of Object.entries(params.handlers)) {
+					let c = this;
+					this.element.addEventListener(event_name, (ev) => fn(ev, c));
+				}
+			}
+		};
+		proto = proto_extended;
 	}
 
-	return component;
+	return proto;
 }
 
-export function build_component(mapping) {
-	return build_component_with_root_element(mapping, document);
+export function build_component(root, params) {
+	let proto = define_component(params, root);
+	let c = new proto(root);
+	return c;
 }

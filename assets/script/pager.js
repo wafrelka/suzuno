@@ -31,41 +31,42 @@ class Pager {
 			}
 		};
 
-		this._view = build_component({
-			element: root_elem,
+		this._view = build_component(root_elem, {
 			classes: ["active", "interacted"],
 			children: {
 				container: {
 					query: ".pager-container",
 					classes: ["animated"],
-					item_classes: ["visible", "blank-page"],
 					items: {
-						image_container: { query: ".pager-page-image-container", },
-						name: { query: ".pager-page-name", },
-						size: { query: ".pager-page-size", },
-						download_link: { query: ".pager-page-download-link", },
-						toolbox_top: {
-							query: ".pager-page-toolbox-top",
-							classes: ["active"],
-						},
-						toolbox_bottom: {
-							query: ".pager-page-toolbox-bottom",
-							classes: ["active"],
-						},
-						back_link: {
-							query: ".pager-page-back-link",
-							handlers: { click: back_fn, },
-						},
-						rot_button: {
-							query: ".pager-page-rot-button",
-							handlers: { click: rot_fn, },
-						},
-						image: {
-							query: ".pager-page-image",
-							classes: ["landscape", "animated"],
-							handlers: {
-								load: completed_fn,
-								error: completed_fn,
+						classes: ["visible", "blank-page"],
+						children: {
+							image_container: { query: ".pager-page-image-container", },
+							name: { query: ".pager-page-name", },
+							size: { query: ".pager-page-size", },
+							download_link: { query: ".pager-page-download-link", },
+							toolbox_top: {
+								query: ".pager-page-toolbox-top",
+								classes: ["active"],
+							},
+							toolbox_bottom: {
+								query: ".pager-page-toolbox-bottom",
+								classes: ["active"],
+							},
+							back_link: {
+								query: ".pager-page-back-link",
+								handlers: { click: back_fn, },
+							},
+							rot_button: {
+								query: ".pager-page-rot-button",
+								handlers: { click: rot_fn, },
+							},
+							image: {
+								query: ".pager-page-image",
+								classes: ["landscape", "animated"],
+								handlers: {
+									load: completed_fn,
+									error: completed_fn,
+								},
 							},
 						},
 					},

@@ -79,7 +79,7 @@ func NewSuzunoServer(root string) *SuzunoServer {
 	assign_sub_handler(s.mux, "/thumbnail/", http.HandlerFunc(s.serve_thumbnail))
 	assign_sub_handler(s.mux, "/meta/directory/", http.HandlerFunc(s.serve_meta_directory))
 
-	s.mux.Handle("/view/", PkgerSingleFileHandler("/assets/view.html"))
+	s.mux.Handle("/view/", PkgerSingleFileHandler("/assets/app.html"))
 	assign_single_point(s.mux, "/", http.RedirectHandler("/view/", http.StatusFound))
 
 	return &s

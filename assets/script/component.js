@@ -161,15 +161,15 @@ class ComponentListTemplate extends PlainComponent {
 }
 
 function hint_select(hint, query) {
-	if(hint === undefined) {
-		return undefined;
+	if(hint === null) {
+		return null;
 	}
 	return hint.querySelector(query);
 }
 
 function hint_select_template(hint) {
 	let h = hint_select(hint, ":scope > template");
-	if(h === undefined) {
+	if(h === null) {
 		return h;
 	}
 	return h.content.firstElementChild;
@@ -218,7 +218,26 @@ function define_component(params, hint) {
 		proto = class extends ComponentListTemplate{};
 		proto.prototype.item_proto = item_proto;
 
-	} else if(hint !== undefined) {
+	} else if(params.static_items !== undefined) {
+
+		let item_hint = (hint !== null) ? hint.firstElementChild : null;
+		let item_proto = define_component(params.static_items, item_hint);
+
+		proto = class extends PlainComponent {
+			constructor(element) {
+				super(element);
+				this._list = [];
+				for(let ch_elem of element.children) {
+					let comp = new item_proto(ch_elem);
+					this._list.push(comp);
+				}
+			}
+			get static_items() {
+				return this._list;
+			}
+		};
+
+	} else if(hint !== null) {
 
 		let tag = hint.tagName;
 
@@ -242,8 +261,11 @@ function define_component(params, hint) {
 			proto = class extends LinkComponent{};
 		} else if(type === "text") {
 			proto = class extends TextComponent{};
-		} else {
+		} else if(type === "plain") {
 			proto = class extends PlainComponent{};
+		} else {
+			console.error("cannot construct component prototype", params, hint);
+			throw "cannot construct component prototype";
 		}
 	}
 
